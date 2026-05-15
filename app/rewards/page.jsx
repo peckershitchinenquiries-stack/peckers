@@ -158,7 +158,7 @@ export default function RewardsPage() {
             <span>
               COLLECT <span className="text-[#9b091b]">CHICKEN</span>
             </span>
-            <span>HEADS</span>
+            <span>HEAD STAMPS</span>
           </h1>
 
           {/* CTAs */}
