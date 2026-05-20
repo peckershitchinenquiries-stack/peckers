@@ -54,14 +54,14 @@ export default function SignUpSection({ initialData = null }) {
         }}
       >
         <h2
-          className="text-white px-[2vw] font-bold text-[7.2vw] sm:text-[6.2vw] md:text-[3.3vw] mb-[1.2vw] md:mb-[2vw] lg:mb-[1.5vw] xl:mb-[0.5vw] leading-tight font-sans text-center"
+          className="text-white px-[2vw] font-bold text-[7.2vw] sm:text-[6.2vw] md:text-[3.3vw] mb-[0.6vw] md:mb-[0.8vw] lg:mb-[0.8vw] xl:mb-[0.3vw] leading-tight font-sans text-center"
           style={{ letterSpacing: "0.04em", fontFamily: "var(--font-peakers)" }}
         >
           {data.heading || "JOIN THE FAMILY"}
         </h2>
 
         <p
-          className="text-[#e7e7e7e0] text-[3.5vw] sm:text-[3vw] md:text-[3.5vw] lg:text-[2vw] xl:text-[1.35vw] font-sans mb-[1.5vw] md:mb-[2.5vw] lg:mb-[1vw] xl:mb-[0.5vw] mt-[0.5vw] md:mt-[1vw] lg:mt-0 text-center max-w-[95vw] md:max-w-[80vw] lg:max-w-[60vw] xl:max-w-max"
+          className="text-[#e7e7e7e0] text-[3.5vw] sm:text-[3vw] md:text-[3.5vw] lg:text-[2vw] xl:text-[1.35vw] font-sans mb-[6vw] md:mb-[6vw] lg:mb-[3.5vw] xl:mb-[2.8vw] mt-[0.5vw] md:mt-[1vw] lg:mt-0 text-center max-w-[95vw] md:max-w-[80vw] lg:max-w-[60vw] xl:max-w-max"
           style={{
             fontWeight: 300,
             letterSpacing: "0.01em",
