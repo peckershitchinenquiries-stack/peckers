@@ -147,9 +147,13 @@ function LogoIcon({ animated }) {
   );
 }
 
-function AlphaRewardCard({ animated }) {
+function AlphaRewardCard({ animated, isOpen, onToggle }) {
   return (
-    <div className={`absolute h-[108.172px] left-[797px] top-[515px] w-[104.075px] ${styles.rewardCard} ${styles.alphaCard} ${animated ? styles.animated : ''} group cursor-help z-10 hover:z-[200]`}>
+    <div
+      data-tooltip-card
+      onClick={onToggle}
+      className={`absolute h-[108.172px] left-[797px] top-[515px] w-[104.075px] ${styles.rewardCard} ${styles.alphaCard} ${animated ? styles.animated : ''} group cursor-pointer z-10 hover:z-[200] ${isOpen ? 'z-[200]' : ''}`}
+    >
       {/* Reward name pill — above */}
       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap z-30">
         <div className="bg-[#e51a38] rounded-full px-5 py-1.5 shadow-md">
@@ -176,8 +180,8 @@ function AlphaRewardCard({ animated }) {
           FREE<br />MEAL
         </p>
       </div>
-      {/* Tooltip — appears on hover above the pill */}
-      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-14 w-[240px] opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 z-[200]">
+      {/* Tooltip — appears on hover/tap to the right of the card */}
+      <div className={`absolute left-full top-1/2 -translate-y-1/2 ml-4 w-[240px] transition-opacity duration-200 z-[200] ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none group-hover:opacity-100'}`}>
         <div className="bg-[#1c1b19] border-2 border-[#e51a38] rounded-xl p-4 shadow-2xl">
           <p className="text-[#e51a38] text-base font-bold uppercase tracking-wide leading-none" style={{ fontFamily: 'var(--font-peakers-bold)' }}>Alpha</p>
           <p className="text-white text-base font-bold mt-2 leading-tight" style={{ fontFamily: 'var(--font-peakers-bold)' }}>Level Up to Alpha!</p>
@@ -241,9 +245,13 @@ function DarkRedDashedBox({ left, hasChickenAlt = false, className, animated }) 
 }
 
 // Beta reward overlay box
-function BetaOverlayBox({ animated }) {
+function BetaOverlayBox({ animated, isOpen, onToggle }) {
   return (
-    <div className={`absolute bg-[rgba(255,141,140,0.1)] border-[#ed641b] border-[4.097px] border-solid left-1/2 -translate-x-1/2 rounded-[24.585px] shadow-[0px_0px_18px_0px_rgba(255,141,140,0.22)] size-[98.339px] top-[520px] ml-[-343px] ${styles.smallCard} ${styles.betaBox} ${animated ? styles.animated : ''} group cursor-help z-10 hover:z-[200]`}>
+    <div
+      data-tooltip-card
+      onClick={onToggle}
+      className={`absolute bg-[rgba(255,141,140,0.1)] border-[#ed641b] border-[4.097px] border-solid left-1/2 -translate-x-1/2 rounded-[24.585px] shadow-[0px_0px_18px_0px_rgba(255,141,140,0.22)] size-[98.339px] top-[520px] ml-[-343px] ${styles.smallCard} ${styles.betaBox} ${animated ? styles.animated : ''} group cursor-pointer z-10 hover:z-[200] ${isOpen ? 'z-[200]' : ''}`}
+    >
       {/* Reward name pill — above */}
       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap z-30">
         <div className="bg-[#ed641b] rounded-full px-5 py-1.5 shadow-md">
@@ -265,8 +273,8 @@ function BetaOverlayBox({ animated }) {
           FREE<br />MAIN
         </p>
       </div>
-      {/* Tooltip — appears on hover above the pill */}
-      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-14 w-[240px] opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 z-[200]">
+      {/* Tooltip — appears on hover/tap to the left of the card */}
+      <div className={`absolute right-full top-1/2 -translate-y-1/2 mr-4 w-[240px] transition-opacity duration-200 z-[200] ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none group-hover:opacity-100'}`}>
         <div className="bg-[#1c1b19] border-2 border-[#ed641b] rounded-xl p-4 shadow-2xl">
           <p className="text-[#ed641b] text-base font-bold uppercase tracking-wide leading-none" style={{ fontFamily: 'var(--font-peakers-bold)' }}>Beta</p>
           <p className="text-white text-base font-bold mt-2 leading-tight" style={{ fontFamily: 'var(--font-peakers-bold)' }}>Level Up to Beta!</p>
@@ -278,9 +286,13 @@ function BetaOverlayBox({ animated }) {
 }
 
 // Gamma reward overlay box
-function GammaOverlayBox({ animated }) {
+function GammaOverlayBox({ animated, isOpen, onToggle }) {
   return (
-    <div className={`absolute bg-[rgba(253,0,0,0.1)] border-[#611824] border-[4.097px] border-solid left-1/2 -translate-x-1/2 rounded-[24.585px] shadow-[0px_0px_18px_0px_rgba(180,35,56,0.4)] size-[98.339px] top-[280.71px] ml-[3px] ${styles.smallCard} ${styles.gammaCard} ${animated ? styles.animated : ''} group cursor-help z-10 hover:z-[200]`}>
+    <div
+      data-tooltip-card
+      onClick={onToggle}
+      className={`absolute bg-[rgba(253,0,0,0.1)] border-[#611824] border-[4.097px] border-solid left-1/2 -translate-x-1/2 rounded-[24.585px] shadow-[0px_0px_18px_0px_rgba(180,35,56,0.4)] size-[98.339px] top-[280.71px] ml-[3px] ${styles.smallCard} ${styles.gammaCard} ${animated ? styles.animated : ''} group cursor-pointer z-10 hover:z-[200] ${isOpen ? 'z-[200]' : ''}`}
+    >
       {/* Reward name pill — above */}
       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap z-30">
         <div className="bg-[#611824] rounded-full px-5 py-1.5 shadow-md">
@@ -298,14 +310,14 @@ function GammaOverlayBox({ animated }) {
       </div>
       {/* Perk text — below */}
       <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 text-center whitespace-nowrap z-30">
-        <p className="text-[#d8192a] text-[19px] leading-[1.05] tracking-[0.12em]" style={{ fontFamily: 'var(--font-peakers-bold)' }}>
+        <p className="text-[#611824] text-[19px] leading-[1.05] tracking-[0.12em]" style={{ fontFamily: 'var(--font-peakers-bold)' }}>
           FREE<br />SIDE
         </p>
       </div>
-      {/* Tooltip — appears on hover above the pill */}
-      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-14 w-[240px] opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 z-[200]">
+      {/* Tooltip — appears on hover/tap above the pill */}
+      <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-14 w-[240px] transition-opacity duration-200 z-[200] ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none group-hover:opacity-100'}`}>
         <div className="bg-[#1c1b19] border-2 border-[#611824] rounded-xl p-4 shadow-2xl">
-          <p className="text-[#d8192a] text-base font-bold uppercase tracking-wide leading-none" style={{ fontFamily: 'var(--font-peakers-bold)' }}>Gamma</p>
+          <p className="text-[#611824] text-base font-bold uppercase tracking-wide leading-none" style={{ fontFamily: 'var(--font-peakers-bold)' }}>Gamma</p>
           <p className="text-white text-base font-bold mt-2 leading-tight" style={{ fontFamily: 'var(--font-peakers-bold)' }}>Level Up to Gamma!</p>
           <p className="text-[#a1a1aa] text-sm mt-2 leading-snug" style={{ fontFamily: 'var(--font-peakers)' }}>Collect 3 chicken heads to unlock your Gamma Reward and get any Free Side on us.</p>
         </div>
@@ -340,9 +352,13 @@ function GoldDashedBox({ mlOffset, className, animated }) {
 }
 
 // Recruit group
-function RecruitGroup({ animated }) {
+function RecruitGroup({ animated, isOpen, onToggle }) {
   return (
-    <div className={`absolute left-[113px] top-[220px] h-[113px] w-[88px] ${styles.rewardCard} ${styles.recruitGroup} ${animated ? styles.animated : ''} group cursor-help z-10 hover:z-[200]`}>
+    <div
+      data-tooltip-card
+      onClick={onToggle}
+      className={`absolute left-[113px] top-[220px] h-[113px] w-[88px] ${styles.rewardCard} ${styles.recruitGroup} ${animated ? styles.animated : ''} group cursor-pointer z-10 hover:z-[200] ${isOpen ? 'z-[200]' : ''}`}
+    >
       <div className="absolute inset-0">
         <Image
           alt="Recruit card small"
@@ -361,7 +377,7 @@ function RecruitGroup({ animated }) {
           sizes="58px"
         />
       </div>
-      <div className="absolute top-full left-1/2 -translate-x-1/2 mt-4 w-[280px] opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 z-[200]">
+      <div className={`absolute left-full top-1/2 -translate-y-1/2 ml-4 w-[280px] transition-opacity duration-200 z-[200] ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none group-hover:opacity-100'}`}>
         <div className="bg-[#1c1b19] border-2 border-[#d4a838] rounded-xl p-4 shadow-2xl">
           <p className="text-[#d4a838] text-base font-bold uppercase tracking-wide leading-none" style={{ fontFamily: 'var(--font-peakers-bold)' }}>Recruit</p>
           <p className="text-white text-xl font-bold mt-2 leading-none" style={{ fontFamily: 'var(--font-peakers-bold)' }}>Welcome to the Inner Circle</p>
@@ -507,6 +523,7 @@ function ArrowConnector({ left, top, width, height, viewBox, pathData, className
 export default function RewardsRoadmap() {
   const containerRef = useRef(null);
   const [scale, setScale] = useState(1);
+  const [openTooltip, setOpenTooltip] = useState(null);
   const isInView = true; // animations removed — always render in final visible state
 
   const DESIGN_WIDTH = 1000;
@@ -532,8 +549,25 @@ export default function RewardsRoadmap() {
     return () => resizeObserver.disconnect();
   }, []);
 
+  // Close the open tooltip when tapping anywhere outside a card (mobile UX).
+  useEffect(() => {
+    if (!openTooltip) return;
+    const handleOutside = (e) => {
+      if (!e.target.closest('[data-tooltip-card]')) {
+        setOpenTooltip(null);
+      }
+    };
+    document.addEventListener('click', handleOutside);
+    return () => document.removeEventListener('click', handleOutside);
+  }, [openTooltip]);
+
+  const makeToggle = (id) => (e) => {
+    e.stopPropagation();
+    setOpenTooltip((cur) => (cur === id ? null : id));
+  };
+
   return (
-    <div ref={containerRef} className="w-full overflow-hidden py-4 flex justify-center">
+    <div ref={containerRef} className="w-full overflow-visible py-4 flex justify-center">
       <div
         className="relative"
         style={{
@@ -615,7 +649,7 @@ export default function RewardsRoadmap() {
 
           {/* ── Row 1: Recruit · Gold · Gamma · DarkRed · DarkRed ───── */}
           <div>
-            <RecruitGroup animated={isInView} />
+            <RecruitGroup animated={isInView} isOpen={openTooltip === 'recruit'} onToggle={makeToggle('recruit')} />
           </div>
 
           <div>
@@ -623,7 +657,7 @@ export default function RewardsRoadmap() {
           </div>
 
           <div>
-            <GammaOverlayBox animated={isInView} />
+            <GammaOverlayBox animated={isInView} isOpen={openTooltip === 'gamma'} onToggle={makeToggle('gamma')} />
           </div>
 
           <div>
@@ -635,7 +669,7 @@ export default function RewardsRoadmap() {
 
           {/* ── Row 2: Beta · Orange · Orange · Orange · Alpha ──────── */}
           <div>
-            <BetaOverlayBox animated={isInView} />
+            <BetaOverlayBox animated={isInView} isOpen={openTooltip === 'beta'} onToggle={makeToggle('beta')} />
           </div>
 
           <div>
@@ -649,7 +683,7 @@ export default function RewardsRoadmap() {
           </div>
 
           <div>
-            <AlphaRewardCard animated={isInView} />
+            <AlphaRewardCard animated={isInView} isOpen={openTooltip === 'alpha'} onToggle={makeToggle('alpha')} />
           </div>
 
           {/* ── Dashed connection lines ─────────────────────── */}

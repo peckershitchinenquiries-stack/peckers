@@ -148,8 +148,9 @@ export default function RewardsTermsPage() {
             </p>
             <ul className="space-y-3 pl-2">
               <li>
-                <span className="text-white font-semibold">Recruit</span> — Free stamp awarded on
-                sign-up. Start earning Chicken Heads straight away.
+                <span className="text-white font-semibold">Recruit</span> — Sign up for the Peckers
+                Loyalty program and start collecting chicken head stamps on every order of £12 or
+                more.
               </li>
               <li>
                 <span className="text-white font-semibold">Gamma</span> — earned by collecting the
