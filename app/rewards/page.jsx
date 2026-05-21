@@ -333,7 +333,7 @@ export default function RewardsPage() {
       </section>
 
       {/* 3. THE CHICKEN HEADS TIER SYSTEM — original Figma roadmap, animations stripped */}
-      <section className="bg-[#141311] py-12 md:py-16 px-3 sm:px-4 md:px-6 overflow-hidden border-t border-t-white/5 relative">
+      <section className="bg-[#141311] py-12 md:py-16 px-3 sm:px-4 md:px-6 border-t border-t-white/5 relative">
         <div className="max-w-[1100px] mx-auto">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 sm:gap-6 mb-2 sm:mb-3 md:mb-4 px-2 sm:px-0 items-center">
             <div className="flex flex-col gap-2 text-center md:text-left">
@@ -353,7 +353,7 @@ export default function RewardsPage() {
               10 HEADS = ALPHA STATUS
             </div>
           </div>
-          <div className="px-0 sm:px-2 md:px-0 w-full overflow-x-auto">
+          <div className="px-0 sm:px-2 md:px-0 w-full">
             <RewardsRoadmap />
           </div>
         </div>

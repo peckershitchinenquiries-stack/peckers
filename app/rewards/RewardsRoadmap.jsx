@@ -180,8 +180,8 @@ function AlphaRewardCard({ animated, isOpen, onToggle }) {
           FREE<br />MEAL
         </p>
       </div>
-      {/* Tooltip — appears on hover/tap to the right of the card */}
-      <div className={`absolute left-full top-1/2 -translate-y-1/2 ml-4 w-[240px] transition-opacity duration-200 z-[200] ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none group-hover:opacity-100'}`}>
+      {/* Tooltip — mobile: below card · desktop: right of card */}
+      <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-4 md:top-1/2 md:left-full md:-translate-y-1/2 md:translate-x-0 md:mt-0 md:ml-4 w-[240px] transition-opacity duration-200 z-[200] ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none group-hover:opacity-100'}`}>
         <div className="bg-[#1c1b19] border-2 border-[#e51a38] rounded-xl p-4 shadow-2xl">
           <p className="text-[#e51a38] text-base font-bold uppercase tracking-wide leading-none" style={{ fontFamily: 'var(--font-peakers-bold)' }}>Alpha</p>
           <p className="text-white text-base font-bold mt-2 leading-tight" style={{ fontFamily: 'var(--font-peakers-bold)' }}>Level Up to Alpha!</p>
@@ -273,8 +273,8 @@ function BetaOverlayBox({ animated, isOpen, onToggle }) {
           FREE<br />MAIN
         </p>
       </div>
-      {/* Tooltip — appears on hover/tap to the left of the card */}
-      <div className={`absolute right-full top-1/2 -translate-y-1/2 mr-4 w-[240px] transition-opacity duration-200 z-[200] ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none group-hover:opacity-100'}`}>
+      {/* Tooltip — mobile: below card · desktop: left of card */}
+      <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-4 md:top-1/2 md:right-full md:left-auto md:-translate-y-1/2 md:translate-x-0 md:mt-0 md:mr-4 w-[240px] transition-opacity duration-200 z-[200] ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none group-hover:opacity-100'}`}>
         <div className="bg-[#1c1b19] border-2 border-[#ed641b] rounded-xl p-4 shadow-2xl">
           <p className="text-[#ed641b] text-base font-bold uppercase tracking-wide leading-none" style={{ fontFamily: 'var(--font-peakers-bold)' }}>Beta</p>
           <p className="text-white text-base font-bold mt-2 leading-tight" style={{ fontFamily: 'var(--font-peakers-bold)' }}>Level Up to Beta!</p>
@@ -314,8 +314,8 @@ function GammaOverlayBox({ animated, isOpen, onToggle }) {
           FREE<br />SIDE
         </p>
       </div>
-      {/* Tooltip — appears on hover/tap above the pill */}
-      <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-14 w-[240px] transition-opacity duration-200 z-[200] ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none group-hover:opacity-100'}`}>
+      {/* Tooltip — mobile: below card · desktop: above pill */}
+      <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-4 md:top-auto md:bottom-full md:mt-0 md:mb-14 w-[240px] transition-opacity duration-200 z-[200] ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none group-hover:opacity-100'}`}>
         <div className="bg-[#1c1b19] border-2 border-[#611824] rounded-xl p-4 shadow-2xl">
           <p className="text-[#611824] text-base font-bold uppercase tracking-wide leading-none" style={{ fontFamily: 'var(--font-peakers-bold)' }}>Gamma</p>
           <p className="text-white text-base font-bold mt-2 leading-tight" style={{ fontFamily: 'var(--font-peakers-bold)' }}>Level Up to Gamma!</p>
@@ -377,7 +377,8 @@ function RecruitGroup({ animated, isOpen, onToggle }) {
           sizes="58px"
         />
       </div>
-      <div className={`absolute left-full top-1/2 -translate-y-1/2 ml-4 w-[280px] transition-opacity duration-200 z-[200] ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none group-hover:opacity-100'}`}>
+      {/* Tooltip — mobile: below card · desktop: right of card */}
+      <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-4 md:top-1/2 md:left-full md:-translate-y-1/2 md:translate-x-0 md:mt-0 md:ml-4 w-[280px] transition-opacity duration-200 z-[200] ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none group-hover:opacity-100'}`}>
         <div className="bg-[#1c1b19] border-2 border-[#d4a838] rounded-xl p-4 shadow-2xl">
           <p className="text-[#d4a838] text-base font-bold uppercase tracking-wide leading-none" style={{ fontFamily: 'var(--font-peakers-bold)' }}>Recruit</p>
           <p className="text-white text-xl font-bold mt-2 leading-none" style={{ fontFamily: 'var(--font-peakers-bold)' }}>Welcome to the Inner Circle</p>
