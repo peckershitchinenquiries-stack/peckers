@@ -173,6 +173,7 @@ export default function CoopImages({ locations = [] }) {
                 disabled={isSubmitting}
                 className="w-[85%] md:w-[90%] lg:w-[85%] xl:w-[70%] bg-transparent border border-[#383838] rounded-md text-center text-white font-mono py-[3vw] md:py-[2.5vw] lg:py-[1.2vw] xl:py-[0.7vw] px-[4vw] md:px-[4vw] lg:px-[2vw] xl:px-[1vw] mb-[4vw] md:mb-[4vw] lg:mb-[2vw] xl:mb-[1.6vw] placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-white transition-all text-[4vw] md:text-[2.2vw] lg:text-[1.3vw] xl:text-[1vw] disabled:opacity-50"
                 required
+                suppressHydrationWarning
               />
 
               <button

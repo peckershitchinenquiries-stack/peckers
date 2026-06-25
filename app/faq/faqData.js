@@ -120,7 +120,7 @@ export const faqData = [
       {
         id: 21,
         question: "How can I contact peckers?",
-        answer: "You can contact us directly by phone at either of our locations. For Peckers Stevenage, you can reach us at 07879 512344, and for Peckers Hitchin, the number is 07599 828199."
+        answer: "You can contact us directly by phone at either of our locations. For Peckers Stevenage, you can reach us at 07448318855, and for Peckers Hitchin, the number is 07599 828199."
       }
     ]
   }
