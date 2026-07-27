@@ -10,6 +10,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Navbar from "./Navbar";
 import ConditionalFooter from "./ConditionalFooter";
 import CookieConsent from "./components/CookieConsent";
+import PromoPopup from "./components/PromoPopup";
 
 export default function ClientWrapper({ children, preloadedSettings, preloadedFooter }) {
   const pathname = usePathname();
@@ -111,6 +112,7 @@ export default function ClientWrapper({ children, preloadedSettings, preloadedFo
       </motion.div>
 
       <CookieConsent />
+      <PromoPopup show={!isPageLoading && isHome} />
     </>
   );
 }
