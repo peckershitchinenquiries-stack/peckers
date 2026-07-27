@@ -168,7 +168,7 @@ export default function PromoPopup({ show }) {
               ref={closeButtonRef}
               onClick={dismiss}
               aria-label="Close announcement"
-              className="absolute right-2 top-2 flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-black/70 text-white transition-colors hover:bg-black/90"
+              className="absolute right-2 top-2 flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-black/70 text-white transition-colors hover:bg-black/90"
             >
               <svg
                 width="18"
