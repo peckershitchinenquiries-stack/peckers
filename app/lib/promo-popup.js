@@ -16,7 +16,7 @@ export const PROMO_POPUP = {
 
   // The image to show. Put the file in the "public" folder and write the path
   // starting from there, e.g. a file at public/popup/promo.png is "/popup/promo.png".
-  src: "/popup/promo5-trimmed.png",
+  src: "/popup/promo5-trimmed.webp",
 
   // Describes the image for screen readers and search engines. Write a plain
   // sentence saying what the image announces.
@@ -26,6 +26,14 @@ export const PROMO_POPUP = {
   // will look stretched or squashed. Check the file's dimensions before editing.
   width: 1182,
   height: 784,
+
+  // Optional portrait version shown on phones (screens under 768px wide).
+  // Tall images suit phone screens far better than wide ones. Set mobileSrc to
+  // null to use the main image everywhere instead. If you do use one, its
+  // mobileWidth/mobileHeight must match the file's real pixel size.
+  mobileSrc: "/popup/mobile-pop-up.webp",
+  mobileWidth: 1054,
+  mobileHeight: 1492,
 
   // Optional link. Leave as null for an image that isn't clickable, or put a
   // URL in quotes to make the whole image a link, e.g. "/rewards" for a page on

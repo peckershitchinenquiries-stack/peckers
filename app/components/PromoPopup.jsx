@@ -104,16 +104,38 @@ export default function PromoPopup({ show }) {
     closeButtonRef.current?.focus();
   }, [open]);
 
+  // A portrait crop suits phones much better than the wide desktop artwork, so
+  // when mobileSrc is set we ship both and let CSS pick. The hidden one is
+  // display:none, which also removes it from the accessibility tree — screen
+  // readers only ever announce the visible image.
+  const hasMobileArt = Boolean(PROMO_POPUP.mobileSrc);
+
   const artwork = (
-    <Image
-      src={PROMO_POPUP.src}
-      alt={PROMO_POPUP.alt}
-      width={PROMO_POPUP.width}
-      height={PROMO_POPUP.height}
-      priority={false}
-      sizes="(max-width: 768px) 94vw, 1400px"
-      className="block w-[94vw] h-auto md:w-auto md:h-[88dvh] md:max-w-[92vw]"
-    />
+    <>
+      {hasMobileArt && (
+        <Image
+          src={PROMO_POPUP.mobileSrc}
+          alt={PROMO_POPUP.alt}
+          width={PROMO_POPUP.mobileWidth}
+          height={PROMO_POPUP.mobileHeight}
+          priority={false}
+          sizes="94vw"
+          className="block h-auto w-auto max-h-[88dvh] max-w-[94vw] md:hidden"
+        />
+      )}
+
+      <Image
+        src={PROMO_POPUP.src}
+        alt={PROMO_POPUP.alt}
+        width={PROMO_POPUP.width}
+        height={PROMO_POPUP.height}
+        priority={false}
+        sizes="(max-width: 768px) 94vw, 1400px"
+        className={`w-[94vw] h-auto md:w-auto md:h-[88dvh] md:max-w-[92vw] ${
+          hasMobileArt ? "hidden md:block" : "block"
+        }`}
+      />
+    </>
   );
 
   let content = artwork;
