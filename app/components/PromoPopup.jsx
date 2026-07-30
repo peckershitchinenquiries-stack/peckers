@@ -120,7 +120,7 @@ export default function PromoPopup({ show }) {
           height={PROMO_POPUP.mobileHeight}
           priority={false}
           sizes="94vw"
-          className="block h-auto w-auto max-h-[88dvh] max-w-[94vw] md:hidden"
+          className="block h-auto w-auto max-h-[88dvh] max-w-[94vw] [@media(min-aspect-ratio:16/9)]:hidden"
         />
       )}
 
@@ -130,10 +130,12 @@ export default function PromoPopup({ show }) {
         width={PROMO_POPUP.width}
         height={PROMO_POPUP.height}
         priority={false}
-        sizes="(max-width: 768px) 94vw, 1400px"
-        className={`w-[94vw] h-auto md:w-auto md:h-[88dvh] md:max-w-[92vw] ${
-          hasMobileArt ? "hidden md:block" : "block"
-        }`}
+        sizes="(max-aspect-ratio:16/9) 94vw, 1600px"
+        className={
+          hasMobileArt
+            ? "hidden [@media(min-aspect-ratio:16/9)]:block [@media(min-aspect-ratio:16/9)]:h-[88dvh] [@media(min-aspect-ratio:16/9)]:w-auto"
+            : "block w-[94vw] h-auto md:w-auto md:h-[88dvh] md:max-w-[92vw]"
+        }
       />
     </>
   );
