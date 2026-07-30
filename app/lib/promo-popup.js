@@ -31,9 +31,9 @@ export const PROMO_POPUP = {
   // Tall images suit phone screens far better than wide ones. Set mobileSrc to
   // null to use the main image everywhere instead. If you do use one, its
   // mobileWidth/mobileHeight must match the file's real pixel size.
-  mobileSrc: "/popup/mobile-promo2-trimmed.webp",
-  mobileWidth: 553,
-  mobileHeight: 791,
+  mobileSrc: "/popup/mobile-promo3.webp",
+  mobileWidth: 1054,
+  mobileHeight: 1492,
 
   // Optional link. Leave as null for an image that isn't clickable, or put a
   // URL in quotes to make the whole image a link, e.g. "/rewards" for a page on

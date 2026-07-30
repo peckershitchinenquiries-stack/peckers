@@ -119,8 +119,8 @@ export default function PromoPopup({ show }) {
           width={PROMO_POPUP.mobileWidth}
           height={PROMO_POPUP.mobileHeight}
           priority={false}
-          sizes="94vw"
-          className="block h-auto w-auto max-h-[88dvh] max-w-[94vw] [@media(min-aspect-ratio:16/9)]:hidden"
+          sizes="98vw"
+          className="block h-auto w-auto max-h-[92dvh] max-w-[98vw] [@media(min-aspect-ratio:16/9)]:hidden"
         />
       )}
 
@@ -163,7 +163,7 @@ export default function PromoPopup({ show }) {
     <AnimatePresence>
       {open && show && (
         <motion.div
-          className="fixed inset-0 z-[10005] flex items-center justify-center p-2"
+          className="fixed inset-0 z-[10005] flex items-center justify-center p-0"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
