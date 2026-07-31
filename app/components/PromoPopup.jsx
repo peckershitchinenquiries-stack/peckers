@@ -120,7 +120,7 @@ export default function PromoPopup({ show }) {
           height={PROMO_POPUP.mobileHeight}
           priority={false}
           sizes="98vw"
-          className="block h-auto w-auto max-h-[92dvh] max-w-[98vw] [@media(min-aspect-ratio:16/9)]:hidden"
+          className="block h-auto w-auto max-h-[92dvh] max-w-[98vw] [@media(pointer:fine)]:hidden"
         />
       )}
 
@@ -130,10 +130,13 @@ export default function PromoPopup({ show }) {
         width={PROMO_POPUP.width}
         height={PROMO_POPUP.height}
         priority={false}
-        sizes="(max-aspect-ratio:16/9) 94vw, 1600px"
+        sizes="(max-aspect-ratio:16/9) 98vw, 1600px"
         className={
           hasMobileArt
-            ? "hidden [@media(min-aspect-ratio:16/9)]:block [@media(min-aspect-ratio:16/9)]:h-[88dvh] [@media(min-aspect-ratio:16/9)]:w-auto"
+            ? // Visibility keys off the input device (a trackpad/mouse means laptop
+              // or desktop), while sizing keys off viewport shape — a narrow or
+              // short window must fall back to width-driven or it would overflow.
+              "hidden w-[98vw] h-auto [@media(pointer:fine)]:block [@media(min-aspect-ratio:16/9)]:w-auto [@media(min-aspect-ratio:16/9)]:h-[88dvh]"
             : "block w-[94vw] h-auto md:w-auto md:h-[88dvh] md:max-w-[92vw]"
         }
       />
