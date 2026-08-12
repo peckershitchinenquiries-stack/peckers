@@ -171,11 +171,14 @@ export default function PromoPopup({ show, lenisRef }) {
   // as a panel over the page rather than something bleeding off the sides.
   const artWidth = (width, height, maxPercent) => {
     const ratio = artRatio(width, height);
-    const reserve = hasCta ? "6rem" : "2.5rem";
+    // Vertical space held back for the CTA button, its gap, and a little
+    // breathing room. Raise it to shrink the artwork, lower it to grow the
+    // artwork — but keep it above (button height + 12px gap) or the two crowd.
+    const reserve = hasCta ? "7.5rem" : "2.5rem";
     return `min(${maxPercent}, ${artMaxWidth(width, height)}px, calc((100dvh - ${reserve}) / ${ratio}))`;
   };
 
-  const desktopWidth = artWidth(PROMO_POPUP.width, PROMO_POPUP.height, "96%");
+  const desktopWidth = artWidth(PROMO_POPUP.width, PROMO_POPUP.height, "100%");
   const mobileWidth = hasMobileArt
     ? artWidth(PROMO_POPUP.mobileWidth, PROMO_POPUP.mobileHeight, "96%")
     : artWidth(PROMO_POPUP.width, PROMO_POPUP.height, "94%");
@@ -218,21 +221,22 @@ export default function PromoPopup({ show, lenisRef }) {
   // Reuses the site's standard action button (the pill with the offset colour
   // block that slides out on hover, same as the header's Click & Collect and
   // Delivery buttons), so the promo matches the rest of the site by default.
-  // Black text: white fails contrast on this orange, and the header already
-  // pairs black text with its lighter button.
+  // White text: #851425 is a deep red, so black on it is barely legible while
+  // white clears the contrast bar comfortably — the same pairing the header's
+  // red Delivery button uses.
   const cta = hasCta ? (
     <HeaderActionButton
       href={PROMO_POPUP.ctaHref}
       onClick={dismiss}
-      bgColor="bg-[#ff8000]"
-      borderColor="border-[#ff8000]"
-      textColor="text-black"
+      bgColor="bg-[#c20e0e]"
+      borderColor="border-[#851425]"
+      textColor="text-white"
       shimmerColor="bg-white"
       // Height rather than vertical padding: the base button already sets
       // pb-[2px], which would fight a py-* value — the header buttons size
-      // themselves the same way. pt-[2px] matches that bottom padding so the
-      // label lands dead centre instead of sitting ~2px high.
-      className="h-[40px] px-[7vw] pt-[7px] font-neuzeit text-[4vw] font-black uppercase tracking-wide whitespace-nowrap hover:bg-[#e57300] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white md:h-[42px] md:px-[28px] md:text-[16px]"
+      // themselves the same way. pt-* counterweights that bottom padding so the
+      // label lands centred rather than sitting high.
+      className="h-[52px] px-[9vw] pt-[7px] font-neuzeit text-[4.6vw] font-black uppercase tracking-wide whitespace-nowrap hover:bg-[#6d101e] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white md:h-[56px] md:px-[38px] md:text-[20px]"
     >
       {PROMO_POPUP.ctaLabel}
     </HeaderActionButton>

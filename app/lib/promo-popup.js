@@ -16,7 +16,7 @@ export const PROMO_POPUP = {
 
   // The image to show. Put the file in the "public" folder and write the path
   // starting from there, e.g. a file at public/popup/promo.png is "/popup/promo.png".
-  src: "/popup/voting_lines_desktop-trimmed.webp",
+  src: "/popup/final_desktop-trimmed.webp",
 
   // Describes the image for screen readers and search engines. Write a plain
   // sentence saying what the image announces.
@@ -24,8 +24,8 @@ export const PROMO_POPUP = {
 
   // The image's real pixel size. These must match the actual file or the popup
   // will look stretched or squashed. Check the file's dimensions before editing.
-  width: 1648,
-  height: 921,
+  width: 1767,
+  height: 874,
 
   // Optional portrait version shown on phones (screens under 768px wide).
   // Tall images suit phone screens far better than wide ones. Set mobileSrc to
@@ -33,9 +33,9 @@ export const PROMO_POPUP = {
   // mobileWidth/mobileHeight must match the file's real pixel size.
   // The portrait poster is used on phones; the landscape one above takes over
   // from 768px up, where a wide banner suits the screen far better.
-  mobileSrc: "/popup/voting_lines-trimmed.webp",
-  mobileWidth: 1612,
-  mobileHeight: 2435,
+  mobileSrc: "/popup/voting_line_mbl-trimmed.webp",
+  mobileWidth: 1076,
+  mobileHeight: 1432,
 
   // Optional link. Leave as null for an image that isn't clickable, or put a
   // URL in quotes to make the whole image a link, e.g. "/rewards" for a page on

@@ -11,7 +11,10 @@
       "PowerShell(node \"C:\\\\Users\\\\landa\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--NextJs-peckers\\\\85b37fe3-0e47-40e9-b95e-73dcf860774d\\\\scratchpad\\\\quality.js\")",
       "PowerShell(node \"C:\\\\Users\\\\landa\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--NextJs-peckers\\\\85b37fe3-0e47-40e9-b95e-73dcf860774d\\\\scratchpad\\\\analyze-desktop.js\")",
       "PowerShell(node \"C:\\\\Users\\\\landa\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--NextJs-peckers\\\\85b37fe3-0e47-40e9-b95e-73dcf860774d\\\\scratchpad\\\\build-desktop.js\")",
-      "PowerShell(node \"C:\\\\Users\\\\landa\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--NextJs-peckers\\\\85b37fe3-0e47-40e9-b95e-73dcf860774d\\\\scratchpad\\\\compare-desktop.js\")"
+      "PowerShell(node \"C:\\\\Users\\\\landa\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--NextJs-peckers\\\\85b37fe3-0e47-40e9-b95e-73dcf860774d\\\\scratchpad\\\\compare-desktop.js\")",
+      "PowerShell(Get-ChildItem \"C:\\\\NextJs\\\\peckers\\\\public\\\\popup\" | Select-Object Name, @{n='KB';e={[math]::Round\\($_.Length/1KB,1\\)}}, LastWriteTime | Sort-Object LastWriteTime -Descending | Format-Table -AutoSize)",
+      "PowerShell(node \"C:\\\\Users\\\\landa\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--NextJs-peckers\\\\85b37fe3-0e47-40e9-b95e-73dcf860774d\\\\scratchpad\\\\build-new.js\")",
+      "PowerShell(node \"C:\\\\Users\\\\landa\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--NextJs-peckers\\\\85b37fe3-0e47-40e9-b95e-73dcf860774d\\\\scratchpad\\\\build-final-desktop.js\")"
     ],
     "additionalDirectories": [
       "C:\\Users\\user\\.claude"
