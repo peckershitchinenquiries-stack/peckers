@@ -112,7 +112,7 @@ export default function ClientWrapper({ children, preloadedSettings, preloadedFo
       </motion.div>
 
       <CookieConsent />
-      <PromoPopup show={!isPageLoading && isHome} />
+      <PromoPopup show={!isPageLoading && isHome} lenisRef={lenisRef} />
     </>
   );
 }

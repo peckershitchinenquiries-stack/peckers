@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
+import HeaderActionButton from "./HeaderActionButton";
 import { readConsent } from "../lib/cookie-consent";
 import {
   PROMO_POPUP,
@@ -22,7 +23,7 @@ const CONSENT_TIMEOUT_MS = 30000;
 const isExternalHref = (href) =>
   typeof href === "string" && /^(https?:)?\/\//i.test(href);
 
-export default function PromoPopup({ show }) {
+export default function PromoPopup({ show, lenisRef }) {
   // Starts closed so SSR and the first client paint render nothing at all —
   // every "should this appear?" check reads the browser, and none of it is safe
   // during render (same reasoning as CookieConsent).
@@ -104,11 +105,87 @@ export default function PromoPopup({ show }) {
     closeButtonRef.current?.focus();
   }, [open]);
 
+  // Freeze the page while the popup is up. Without this the page scrolls behind
+  // the dialog, and because the mobile order bar is fixed it stays put while the
+  // content slides past it under the scrim — which is what reads as a glitch.
+  // Native overflow alone is not enough here: Lenis runs its own scroll loop and
+  // has to be told to stop, and iOS still rubber-bands a body set to
+  // overflow:hidden, so touch drags are swallowed too.
+  useEffect(() => {
+    if (!open) return;
+
+    const body = document.body;
+    const previousOverflow = body.style.overflow;
+    const lenis = lenisRef?.current;
+
+    body.style.overflow = "hidden";
+    lenis?.stop();
+
+    const blockTouchScroll = (event) => event.preventDefault();
+    // Must be non-passive or the browser ignores preventDefault on touchmove.
+    window.addEventListener("touchmove", blockTouchScroll, { passive: false });
+
+    return () => {
+      body.style.overflow = previousOverflow;
+      lenis?.start();
+      window.removeEventListener("touchmove", blockTouchScroll);
+    };
+  }, [open, lenisRef]);
+
   // A portrait crop suits phones much better than the wide desktop artwork, so
   // when mobileSrc is set we ship both and let CSS pick. The hidden one is
   // display:none, which also removes it from the accessibility tree — screen
   // readers only ever announce the visible image.
   const hasMobileArt = Boolean(PROMO_POPUP.mobileSrc);
+  const hasCta = Boolean(PROMO_POPUP.ctaLabel && PROMO_POPUP.ctaHref);
+
+  // The dialog is sized by width alone and the image simply fills it; the CTA
+  // button sits centred underneath at its own natural size.
+  // The width formula picks whichever limit bites first:
+  //   maxPercent      — 100% on phones (edge to edge), 96% on desktop. A
+  //                     percentage rather than vw so a desktop scrollbar can't
+  //                     push the dialog wider than the visible page.
+  //   maxWidth        — stops the artwork ballooning on large desktops
+  //   (height budget) — the height left after the button, converted back to a
+  //                     width through the image's own aspect ratio, so a short
+  //                     window shrinks the poster instead of clipping it.
+  //
+  // On phones the first limit almost always wins, so every handset shows the
+  // poster at full width. How much of the SCREEN that fills still varies with
+  // the handset's shape — a 2:3 poster covers ~82% of a stubby iPhone SE but
+  // only ~69% of a tall 16 Pro Max, and no sizing rule can change that. Only a
+  // taller mobile crop (set via mobileSrc) closes that gap.
+  const artRatio = (width, height) => (width && height ? height / width : 1);
+
+  // A portrait poster never needs to be wide, so it gets a modest cap. A
+  // landscape banner is meant to run wide, so it may grow to a quarter past its
+  // own pixel width — enough headroom to keep the gap to the page edge small on
+  // a large monitor, while bounding how far the file is ever stretched. Flat
+  // artwork like this survives a fraction of upscaling invisibly; beyond that it
+  // starts to soften, and the fix is a wider export rather than a bigger cap.
+  const artMaxWidth = (width, height) =>
+    artRatio(width, height) >= 1 ? 620 : Math.round((width || 960) * 1.25);
+
+  // maxPercent differs by context: phones go edge to edge, where every pixel of
+  // width counts, while a desktop keeps a small even margin so the banner reads
+  // as a panel over the page rather than something bleeding off the sides.
+  const artWidth = (width, height, maxPercent) => {
+    const ratio = artRatio(width, height);
+    const reserve = hasCta ? "6rem" : "2.5rem";
+    return `min(${maxPercent}, ${artMaxWidth(width, height)}px, calc((100dvh - ${reserve}) / ${ratio}))`;
+  };
+
+  const desktopWidth = artWidth(PROMO_POPUP.width, PROMO_POPUP.height, "96%");
+  const mobileWidth = hasMobileArt
+    ? artWidth(PROMO_POPUP.mobileWidth, PROMO_POPUP.mobileHeight, "100%")
+    : artWidth(PROMO_POPUP.width, PROMO_POPUP.height, "94%");
+
+  // Tells the browser how wide the file will actually be drawn, so it downloads
+  // the right size rather than the full-resolution original.
+  const desktopSizes = `(min-width: 768px) ${artMaxWidth(
+    PROMO_POPUP.width,
+    PROMO_POPUP.height
+  )}px, 100vw`;
 
   const artwork = (
     <>
@@ -119,8 +196,8 @@ export default function PromoPopup({ show }) {
           width={PROMO_POPUP.mobileWidth}
           height={PROMO_POPUP.mobileHeight}
           priority={false}
-          sizes="98vw"
-          className="block h-auto w-auto max-h-[92dvh] max-w-[98vw] [@media(pointer:fine)]:hidden"
+          sizes="100vw"
+          className="block h-auto w-full md:hidden"
         />
       )}
 
@@ -130,18 +207,36 @@ export default function PromoPopup({ show }) {
         width={PROMO_POPUP.width}
         height={PROMO_POPUP.height}
         priority={false}
-        sizes="(max-aspect-ratio:16/9) 98vw, 1600px"
+        sizes={desktopSizes}
         className={
-          hasMobileArt
-            ? // Visibility keys off the input device (a trackpad/mouse means laptop
-              // or desktop), while sizing keys off viewport shape — a narrow or
-              // short window must fall back to width-driven or it would overflow.
-              "hidden w-[98vw] h-auto [@media(pointer:fine)]:block [@media(min-aspect-ratio:16/9)]:w-auto [@media(min-aspect-ratio:16/9)]:h-[88dvh]"
-            : "block w-[94vw] h-auto md:w-auto md:h-[88dvh] md:max-w-[92vw]"
+          hasMobileArt ? "hidden h-auto w-full md:block" : "block h-auto w-full"
         }
       />
     </>
   );
+
+  // Reuses the site's standard action button (the pill with the offset colour
+  // block that slides out on hover, same as the header's Click & Collect and
+  // Delivery buttons), so the promo matches the rest of the site by default.
+  // Black text: white fails contrast on this orange, and the header already
+  // pairs black text with its lighter button.
+  const cta = hasCta ? (
+    <HeaderActionButton
+      href={PROMO_POPUP.ctaHref}
+      onClick={dismiss}
+      bgColor="bg-[#ff8000]"
+      borderColor="border-[#ff8000]"
+      textColor="text-black"
+      shimmerColor="bg-white"
+      // Height rather than vertical padding: the base button already sets
+      // pb-[2px], which would fight a py-* value — the header buttons size
+      // themselves the same way. pt-[2px] matches that bottom padding so the
+      // label lands dead centre instead of sitting ~2px high.
+      className="h-[40px] px-[7vw] pt-[7px] font-neuzeit text-[4vw] font-black uppercase tracking-wide whitespace-nowrap hover:bg-[#e57300] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white md:h-[42px] md:px-[28px] md:text-[16px]"
+    >
+      {PROMO_POPUP.ctaLabel}
+    </HeaderActionButton>
+  ) : null;
 
   let content = artwork;
   if (PROMO_POPUP.href) {
@@ -151,12 +246,12 @@ export default function PromoPopup({ show }) {
         target="_blank"
         rel="noopener noreferrer"
         onClick={dismiss}
-        className="block"
+        className="block w-full"
       >
         {artwork}
       </a>
     ) : (
-      <Link href={PROMO_POPUP.href} onClick={dismiss} className="block">
+      <Link href={PROMO_POPUP.href} onClick={dismiss} className="block w-full">
         {artwork}
       </Link>
     );
@@ -173,7 +268,7 @@ export default function PromoPopup({ show }) {
           transition={{ duration: 0.25 }}
         >
           <div
-            className="absolute inset-0 bg-black/75 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/90 backdrop-blur-sm"
             onClick={dismiss}
             aria-hidden="true"
           />
@@ -186,9 +281,12 @@ export default function PromoPopup({ show }) {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.96 }}
             transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-            className="relative"
+            style={{ "--promo-w": mobileWidth, "--promo-w-md": desktopWidth }}
+            className="relative flex w-[var(--promo-w)] flex-col items-center gap-3 md:w-[var(--promo-w-md)]"
           >
             {content}
+
+            {cta}
 
             <button
               type="button"

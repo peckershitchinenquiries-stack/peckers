@@ -2,7 +2,16 @@
   "permissions": {
     "allow": [
       "Read(//c/Users/user/.claude/**)",
-      "Bash(node -e \"require\\('fs'\\).readFileSync\\('app/rewards/RewardsRoadmap.jsx','utf8'\\).length\")"
+      "Bash(node -e \"require\\('fs'\\).readFileSync\\('app/rewards/RewardsRoadmap.jsx','utf8'\\).length\")",
+      "PowerShell(Add-Type -AssemblyName System.Drawing; Get-ChildItem \"C:\\\\NextJs\\\\peckers\\\\public\\\\popup\" | ForEach-Object { $img = [System.Drawing.Image]::FromFile\\($_.FullName\\); \"{0} = {1}x{2}\" -f $_.Name, $img.Width, $img.Height; $img.Dispose\\(\\) })",
+      "PowerShell(npm run build 2>&1)",
+      "PowerShell(git -C C:\\\\NextJs\\\\peckers status --short)",
+      "PowerShell(node \"C:\\\\Users\\\\landa\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--NextJs-peckers\\\\85b37fe3-0e47-40e9-b95e-73dcf860774d\\\\scratchpad\\\\analyze.js\")",
+      "PowerShell(node \"C:\\\\Users\\\\landa\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--NextJs-peckers\\\\85b37fe3-0e47-40e9-b95e-73dcf860774d\\\\scratchpad\\\\convert.js\")",
+      "PowerShell(node \"C:\\\\Users\\\\landa\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--NextJs-peckers\\\\85b37fe3-0e47-40e9-b95e-73dcf860774d\\\\scratchpad\\\\quality.js\")",
+      "PowerShell(node \"C:\\\\Users\\\\landa\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--NextJs-peckers\\\\85b37fe3-0e47-40e9-b95e-73dcf860774d\\\\scratchpad\\\\analyze-desktop.js\")",
+      "PowerShell(node \"C:\\\\Users\\\\landa\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--NextJs-peckers\\\\85b37fe3-0e47-40e9-b95e-73dcf860774d\\\\scratchpad\\\\build-desktop.js\")",
+      "PowerShell(node \"C:\\\\Users\\\\landa\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--NextJs-peckers\\\\85b37fe3-0e47-40e9-b95e-73dcf860774d\\\\scratchpad\\\\compare-desktop.js\")"
     ],
     "additionalDirectories": [
       "C:\\Users\\user\\.claude"

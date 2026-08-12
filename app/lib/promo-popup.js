@@ -16,7 +16,7 @@ export const PROMO_POPUP = {
 
   // The image to show. Put the file in the "public" folder and write the path
   // starting from there, e.g. a file at public/popup/promo.png is "/popup/promo.png".
-  src: "/popup/desk-top-promo-trimmed.webp",
+  src: "/popup/voting_lines_desktop-trimmed.webp",
 
   // Describes the image for screen readers and search engines. Write a plain
   // sentence saying what the image announces.
@@ -24,21 +24,29 @@ export const PROMO_POPUP = {
 
   // The image's real pixel size. These must match the actual file or the popup
   // will look stretched or squashed. Check the file's dimensions before editing.
-  width: 1260,
-  height: 703,
+  width: 1648,
+  height: 921,
 
   // Optional portrait version shown on phones (screens under 768px wide).
   // Tall images suit phone screens far better than wide ones. Set mobileSrc to
   // null to use the main image everywhere instead. If you do use one, its
   // mobileWidth/mobileHeight must match the file's real pixel size.
-  mobileSrc: "/popup/mobile-promo3.webp",
-  mobileWidth: 1054,
-  mobileHeight: 1492,
+  // The portrait poster is used on phones; the landscape one above takes over
+  // from 768px up, where a wide banner suits the screen far better.
+  mobileSrc: "/popup/voting_lines-trimmed.webp",
+  mobileWidth: 1612,
+  mobileHeight: 2435,
 
   // Optional link. Leave as null for an image that isn't clickable, or put a
   // URL in quotes to make the whole image a link, e.g. "/rewards" for a page on
   // this site, or "https://www.just-eat.co.uk" for another website.
   href: null,
+
+  // Optional call-to-action button shown directly under the image, the same
+  // width as the image on every screen size. Set ctaLabel (or ctaHref) to null
+  // to hide the button completely.
+  ctaLabel: "Click here to vote",
+  ctaHref: "https://awards.just-eat.co.uk/2026/best-in-the-east-midlands/",
 
   // Optional scheduling, as "YYYY-MM-DD" in quotes.
   //   startDate: the popup stays hidden before this date.
