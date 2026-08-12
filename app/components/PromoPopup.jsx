@@ -177,7 +177,7 @@ export default function PromoPopup({ show, lenisRef }) {
 
   const desktopWidth = artWidth(PROMO_POPUP.width, PROMO_POPUP.height, "96%");
   const mobileWidth = hasMobileArt
-    ? artWidth(PROMO_POPUP.mobileWidth, PROMO_POPUP.mobileHeight, "100%")
+    ? artWidth(PROMO_POPUP.mobileWidth, PROMO_POPUP.mobileHeight, "96%")
     : artWidth(PROMO_POPUP.width, PROMO_POPUP.height, "94%");
 
   // Tells the browser how wide the file will actually be drawn, so it downloads
