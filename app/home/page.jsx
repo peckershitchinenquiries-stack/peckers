@@ -1,7 +1,6 @@
 import { sanityFetch } from "../../sanity/lib/live";
 import HomePageClient from "./page-client";
 import { fetchGoogleReviews } from "../lib/google-reviews";
-import { urlFor } from "../../sanity/lib/image";
 import { buildPageMetadata } from "../lib/seo";
 import JsonLd from "../components/JsonLd";
 import {
@@ -122,27 +121,18 @@ export default async function HomePage() {
           aggregateRating,
         ]}
       />
-      {homepageData?.videoUrl && (
-        <>
-          <link
-            rel="preload"
-            href={homepageData.videoUrl}
-            as="video"
-            type="video/mp4"
-            // @ts-ignore
-            fetchPriority="high"
-          />
-          {homepageData.heroPoster && (
-            <link
-              rel="preload"
-              href={urlFor(homepageData.heroPoster).width(1920).quality(75).auto("format").url()}
-              as="image"
-              // @ts-ignore
-              fetchPriority="high"
-            />
-          )}
-        </>
-      )}
+      {/*
+        No manual preload for the hero here on purpose.
+
+        The old code preloaded the video with `as="video"`, which is not a valid
+        preload destination — browsers reject it ("<link rel=preload> uses an
+        unsupported `as` value"), so it never did anything except emit a warning.
+
+        The poster doesn't need one either: it's rendered by <Image priority> in
+        page-client, and next/image already emits the preload itself using the
+        exact optimized URL it will request. Hand-writing a second one would
+        point at a different URL and download the image twice.
+      */}
       <HomePageClient
         initialHomepageData={homepageData}
         initialSliderCards={sliderCards}

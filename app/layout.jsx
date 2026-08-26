@@ -150,6 +150,19 @@ export default async function RootLayout({ children }) {
     <html lang="en" suppressHydrationWarning>
       <head>
         {/*
+          The hero video is streamed straight from cdn.sanity.io. Without these
+          hints the browser only starts the DNS lookup + TLS handshake for that
+          host once it reaches the <video> tag, which delays the hero.
+          (next-sanity already preconnects to the *API* host — a different
+          origin, so it doesn't help here.)
+
+          No crossOrigin attribute on purpose: the video is fetched in plain
+          no-CORS mode, and a CORS-mode preconnect opens a separate connection
+          that the video request would not reuse.
+        */}
+        <link rel="preconnect" href="https://cdn.sanity.io" />
+        <link rel="dns-prefetch" href="https://cdn.sanity.io" />
+        {/*
           Google Consent Mode v2. This MUST run before gtag.js loads so the
           default state is "denied" — no analytics/ads cookies are set until the
           visitor opts in via the cookie banner (UK PECR / GDPR requirement).
