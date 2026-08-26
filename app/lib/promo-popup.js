@@ -6,7 +6,10 @@
 
 export const PROMO_POPUP = {
   // Master switch. Set to false to turn the popup off completely.
-  enabled: true,
+  // Currently OFF — the Just Eat voting-line promo has finished. Set this back
+  // to true (and update the image, alt, sizes, version and CTA below) when the
+  // next promo is ready.
+  enabled: false,
 
   // Identifies this particular promo. Once a visitor closes the popup they
   // won't see it again for the rest of their browsing session. Change this to a
