@@ -136,19 +136,47 @@ export default function PromoPopup({ show, lenisRef }) {
   // when mobileSrc is set we ship both and let CSS pick. The hidden one is
   // display:none, which also removes it from the accessibility tree — screen
   // readers only ever announce the visible image.
+  //
+  // The split is by SHAPE, not by width: an upright screen gets the portrait
+  // file, a sideways one gets the landscape file. Width alone gets both ends
+  // wrong — a tablet held upright is wider than 768px but still tall, so the
+  // wide artwork would sit in the middle of it filling less than half the
+  // screen, while a phone turned sideways is narrow by breakpoint yet has
+  // almost no height, so a 2:3 poster there would shrink to a stamp. Matching
+  // the artwork's shape to the screen's keeps it filling the window on both.
   const hasMobileArt = Boolean(PROMO_POPUP.mobileSrc);
   const hasCta = Boolean(PROMO_POPUP.ctaLabel && PROMO_POPUP.ctaHref);
+
+  // The frame around the banner, drawn here rather than painted into the
+  // artwork. That is the whole point of it: a border baked into the file is
+  // part of the image, so the crop below trims it off the top and bottom and
+  // leaves the two sides, and it thickens or thins with whatever scale the
+  // file happens to be drawn at. Drawn here it is exactly borderWidth pixels
+  // on every edge at every screen size, and the crop cannot reach it.
+  //
+  // The site sets box-sizing: border-box throughout, so the frame is laid
+  // inside the width the dialog was given: the banner's outer size is exactly
+  // what the sizing below worked out, and the artwork gives up the pixels.
+  const frameBorder = PROMO_POPUP.borderColor
+    ? {
+        borderStyle: "solid",
+        borderWidth: `${PROMO_POPUP.borderWidth ?? 2}px`,
+        borderColor: PROMO_POPUP.borderColor,
+      }
+    : undefined;
 
   // The dialog is sized by width alone and the image simply fills it; the CTA
   // button sits centred underneath at its own natural size.
   // The width formula picks whichever limit bites first:
-  //   maxPercent      — 100% on phones (edge to edge), 96% on desktop. A
-  //                     percentage rather than vw so a desktop scrollbar can't
-  //                     push the dialog wider than the visible page.
+  //   maxPercent      — 96%, so there is always an even margin down both
+  //                     sides. A percentage rather than vw so a desktop
+  //                     scrollbar can't push the dialog wider than the
+  //                     visible page.
   //   maxWidth        — stops the artwork ballooning on large desktops
-  //   (height budget) — the height left after the button, converted back to a
-  //                     width through the image's own aspect ratio, so a short
-  //                     window shrinks the poster instead of clipping it.
+  //   (height budget) — the height left after the button, widened by the crop
+  //                     allowance below and converted back to a width through
+  //                     the image's own aspect ratio, so a short window trims
+  //                     the poster a little before it starts shrinking it.
   //
   // On phones the first limit almost always wins, so every handset shows the
   // poster at full width. How much of the SCREEN that fills still varies with
@@ -166,32 +194,89 @@ export default function PromoPopup({ show, lenisRef }) {
   const artMaxWidth = (width, height) =>
     artRatio(width, height) >= 1 ? 620 : Math.round((width || 960) * 1.25);
 
-  // maxPercent differs by context: phones go edge to edge, where every pixel of
-  // width counts, while a desktop keeps a small even margin so the banner reads
-  // as a panel over the page rather than something bleeding off the sides.
+  // Vertical space held back for the CTA button, its gap, and a little
+  // breathing room. Raise it to shrink the artwork, lower it to grow the
+  // artwork — but keep it above (button height + 12px gap) or the two crowd.
+  // With no button the artwork takes nearly the whole window, holding back
+  // only a hairline so it never sits flush against the top and bottom edges.
+  const reserve = hasCta ? "7.5rem" : "1.5rem";
+
+  // The height of the box the artwork is drawn into, whatever shape it is.
+  const maxArtHeight = `calc(100dvh - ${reserve})`;
+
+  // How much of the artwork's own height may be trimmed when the window is too
+  // short to show all of it at the width we want.
+  //
+  // A 3:2 poster in a 16:9 window runs out of height long before it runs out of
+  // width, so the only way to fit the whole thing in is to shrink it — and that
+  // is what leaves wide empty bands down either side. Taking a little off the
+  // top and bottom instead buys about 11% more width and closes most of that
+  // gap.
+  //
+  // The trim is split evenly between the two edges, so the value here is twice
+  // what any one edge loses: at 0.10 the artwork must keep 5% of its height
+  // clear of wording at the top AND at the bottom. The current pair have 6.9%
+  // and 10.5% (desktop) and 12.5% and 8.0% (mobile), so both clear it. Check
+  // the same before raising this or before swapping in artwork with tighter
+  // margins — past that point the crop starts cutting into the design.
+  //
+  // It only ever applies when height is the binding limit: on a phone held
+  // upright the portrait artwork is limited by width, and nothing is trimmed.
+  //
+  // allowCrop: false in the config switches it off, for artwork that cannot
+  // lose its edges at all — see the note there.
+  const MAX_CROP = PROMO_POPUP.allowCrop === false ? 0 : 0.1;
+
+  // The margin is the same on both: wide enough that the banner reads as a
+  // panel laid over the page rather than something bleeding off the sides, and
+  // no wider, because every pixel it gives up is a pixel of artwork.
   const artWidth = (width, height, maxPercent) => {
-    const ratio = artRatio(width, height);
-    // Vertical space held back for the CTA button, its gap, and a little
-    // breathing room. Raise it to shrink the artwork, lower it to grow the
-    // artwork — but keep it above (button height + 12px gap) or the two crowd.
-    const reserve = hasCta ? "7.5rem" : "2.5rem";
-    return `min(${maxPercent}, ${artMaxWidth(width, height)}px, calc((100dvh - ${reserve}) / ${ratio}))`;
+    const ratio = artRatio(width, height) * (1 - MAX_CROP);
+    return `min(${maxPercent}, ${artMaxWidth(width, height)}px, calc(${maxArtHeight} / ${ratio}))`;
   };
 
-  const desktopWidth = artWidth(PROMO_POPUP.width, PROMO_POPUP.height, "100%");
+  const desktopWidth = artWidth(PROMO_POPUP.width, PROMO_POPUP.height, "96%");
   const mobileWidth = hasMobileArt
     ? artWidth(PROMO_POPUP.mobileWidth, PROMO_POPUP.mobileHeight, "96%")
-    : artWidth(PROMO_POPUP.width, PROMO_POPUP.height, "94%");
+    : artWidth(PROMO_POPUP.width, PROMO_POPUP.height, "96%");
+
+  // Each artwork's own shape, handed to the frame as an aspect-ratio so its
+  // height follows whatever width the dialog settled on. Written as a ratio
+  // rather than a computed length on purpose: the widths above are percentages
+  // of the viewport, and a percentage read in a height context would resolve
+  // against the wrong axis.
+  const artAspect = (width, height) => `${width || 1} / ${height || 1}`;
+
+  const desktopAspect = artAspect(PROMO_POPUP.width, PROMO_POPUP.height);
+  const mobileAspect = hasMobileArt
+    ? artAspect(PROMO_POPUP.mobileWidth, PROMO_POPUP.mobileHeight)
+    : desktopAspect;
 
   // Tells the browser how wide the file will actually be drawn, so it downloads
   // the right size rather than the full-resolution original.
-  const desktopSizes = `(min-width: 768px) ${artMaxWidth(
+  // Keyed off orientation to match the rule that decides which file shows at
+  // all, so neither image is ever described by the other's layout.
+  const desktopSizes = `(orientation: landscape) ${artMaxWidth(
     PROMO_POPUP.width,
     PROMO_POPUP.height
   )}px, 100vw`;
 
+  const mobileSizes = `(orientation: portrait) ${artMaxWidth(
+    PROMO_POPUP.mobileWidth,
+    PROMO_POPUP.mobileHeight
+  )}px, 100vw`;
+
+  // The frame the artwork is drawn into. aspect-ratio gives it the artwork's
+  // own shape at whatever width the dialog ended up, and max-height clips it
+  // when that comes out taller than the window has room for — which is only
+  // ever by the crop allowance, because the width was derived from this same
+  // budget. object-cover inside centres the overflow, so the trim lands evenly
+  // on the top and bottom edges rather than all at one end.
   const artwork = (
-    <>
+    <div
+      style={frameBorder}
+      className="w-full overflow-hidden aspect-[var(--promo-ar)] max-h-[var(--promo-maxh)] landscape:aspect-[var(--promo-ar-land)]"
+    >
       {hasMobileArt && (
         <Image
           src={PROMO_POPUP.mobileSrc}
@@ -199,8 +284,8 @@ export default function PromoPopup({ show, lenisRef }) {
           width={PROMO_POPUP.mobileWidth}
           height={PROMO_POPUP.mobileHeight}
           priority={false}
-          sizes="100vw"
-          className="block h-auto w-full md:hidden"
+          sizes={mobileSizes}
+          className="block h-full w-full object-cover landscape:hidden"
         />
       )}
 
@@ -212,10 +297,12 @@ export default function PromoPopup({ show, lenisRef }) {
         priority={false}
         sizes={desktopSizes}
         className={
-          hasMobileArt ? "hidden h-auto w-full md:block" : "block h-auto w-full"
+          hasMobileArt
+            ? "hidden h-full w-full object-cover landscape:block"
+            : "block h-full w-full object-cover"
         }
       />
-    </>
+    </div>
   );
 
   // Reuses the site's standard action button (the pill with the offset colour
@@ -285,8 +372,17 @@ export default function PromoPopup({ show, lenisRef }) {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.96 }}
             transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-            style={{ "--promo-w": mobileWidth, "--promo-w-md": desktopWidth }}
-            className="relative flex w-[var(--promo-w)] flex-col items-center gap-3 md:w-[var(--promo-w-md)]"
+            style={{
+              "--promo-w": mobileWidth,
+              "--promo-w-land": desktopWidth,
+              "--promo-ar": mobileAspect,
+              "--promo-ar-land": desktopAspect,
+              "--promo-maxh": maxArtHeight,
+            }}
+            // One width per artwork, switched on the same orientation query
+            // that switches the image itself, so the box can never be sized
+            // from the aspect ratio of the file that isn't showing.
+            className="relative flex w-[var(--promo-w)] flex-col items-center gap-3 landscape:w-[var(--promo-w-land)]"
           >
             {content}
 

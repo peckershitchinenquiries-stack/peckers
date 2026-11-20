@@ -6,50 +6,81 @@
 
 export const PROMO_POPUP = {
   // Master switch. Set to false to turn the popup off completely.
-  // Currently OFF — the Just Eat voting-line promo has finished. Set this back
-  // to true (and update the image, alt, sizes, version and CTA below) when the
-  // next promo is ready.
-  enabled: false,
+  enabled: true,
 
   // Identifies this particular promo. Once a visitor closes the popup they
   // won't see it again for the rest of their browsing session. Change this to a
-  // new value (e.g. "summer-offer-2026") whenever you put up a NEW promo — that
+  // new value (e.g. "summer-offer-2027") whenever you put up a NEW promo — that
   // makes it show again to everyone, including people who dismissed the old one.
-  version: "just-eat-2026",
+  version: "christmas-menu-2026",
 
   // The image to show. Put the file in the "public" folder and write the path
   // starting from there, e.g. a file at public/popup/promo.png is "/popup/promo.png".
-  src: "/popup/final_desktop-trimmed.webp",
+  src: "/popup/banner-pc-final.webp",
 
   // Describes the image for screen readers and search engines. Write a plain
   // sentence saying what the image announces.
-  alt: "Peckers nominated for the Just Eat Best Takeaway Award 2026",
+  alt: "Unwrapping soon: the Peckers Christmas menu. New festive flavours, made for sharing, coming this Christmas.",
 
   // The image's real pixel size. These must match the actual file or the popup
   // will look stretched or squashed. Check the file's dimensions before editing.
-  width: 1767,
-  height: 874,
+  width: 1920,
+  height: 1080,
 
-  // Optional portrait version shown on phones (screens under 768px wide).
-  // Tall images suit phone screens far better than wide ones. Set mobileSrc to
-  // null to use the main image everywhere instead. If you do use one, its
-  // mobileWidth/mobileHeight must match the file's real pixel size.
-  // The portrait poster is used on phones; the landscape one above takes over
-  // from 768px up, where a wide banner suits the screen far better.
-  mobileSrc: "/popup/voting_line_mbl-trimmed.webp",
-  mobileWidth: 1076,
-  mobileHeight: 1432,
+  // Optional portrait version shown on phones held upright. Tall images suit
+  // phone screens far better than wide ones. Set mobileSrc to null to use the
+  // main image everywhere instead. If you do use one, its mobileWidth and
+  // mobileHeight must match the file's real pixel size.
+  // The portrait poster is used on upright phones; the landscape one above
+  // takes over from 768px up, and on any phone turned sideways, where a wide
+  // banner suits the screen far better.
+  mobileSrc: "/popup/banner-mobile-final.webp",
+  mobileWidth: 1333,
+  mobileHeight: 2000,
 
   // Optional link. Leave as null for an image that isn't clickable, or put a
   // URL in quotes to make the whole image a link, e.g. "/rewards" for a page on
   // this site, or "https://www.just-eat.co.uk" for another website.
+  // Null here: this is a "coming soon" teaser, so there is nowhere to send
+  // people yet. Point it at "/menu" once the festive menu is live.
   href: null,
 
   // Optional call-to-action button shown directly under the image, the same
   // width as the image on every screen size. Set ctaLabel (or ctaHref) to null
   // to hide the button completely.
-  ctaLabel: "Click here to vote",
-  ctaHref: "https://awards.just-eat.co.uk/2026/best-in-the-east-midlands/",
+  // Null here for the same reason as href — nothing to click through to yet.
+  // With no button the artwork gets the whole screen to fill.
+  ctaLabel: null,
+  ctaHref: null,
+
+  // Whether the popup may trim a sliver off the top and bottom of the artwork
+  // when the window is too short to show all of it at full width.
+  //
+  // Leave it out (or set true) for an ordinary poster: the banner then fills
+  // noticeably more of a widescreen monitor, losing only background from its
+  // outermost rows, and the margins down either side stay narrow.
+  //
+  // Set it to false when the artwork has a border, frame or any other detail
+  // baked right into its edge. Trimming would cut the top and bottom off that
+  // border and leave the two sides behind, which reads as a bug rather than a
+  // design. With it off, the banner shrinks to fit the window whole instead,
+  // so the margins either side are wider.
+  //
+  // True here: this artwork runs background off every edge and has nothing at
+  // them worth keeping. The frame below is drawn by the site rather than being
+  // part of the file, so it is unaffected by any of this.
+  allowCrop: true,
+
+  // Optional frame drawn around the banner by the site. Because it is drawn
+  // outside the image rather than painted into it, it is never trimmed by the
+  // crop above: it stays an even, exact width on all four sides at every
+  // screen size, and the artwork can still fill the window. A border baked
+  // into the file can do neither, so prefer this.
+  //
+  // borderWidth is in CSS pixels and borderColor is any CSS colour. Set
+  // borderColor to null for no frame at all.
+  borderWidth: 2,
+  borderColor: "#fd5d01",
 
   // Optional scheduling, as "YYYY-MM-DD" in quotes.
   //   startDate: the popup stays hidden before this date.
