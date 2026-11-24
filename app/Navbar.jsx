@@ -7,6 +7,7 @@ import Image from "next/image";
 import Script from "next/script";
 import { FaChevronDown } from "react-icons/fa";
 import HeaderActionButton from "./components/HeaderActionButton";
+import FestiveHat from "./components/FestiveHat";
 import { client } from "../sanity/lib/client";
 
 import { urlFor } from "../sanity/lib/image";
@@ -96,6 +97,9 @@ export default function Navbar({ preloadedSettings = null }) {
         <Link
           href="/home"
           onClick={() => setOpen(false)}
+          // containerType lets FestiveHat measure this box's height in CSS, so
+          // it can work out where the logo artwork actually lands inside it.
+          style={{ containerType: "size" }}
           className={`relative block transition-all duration-300 ease-in-out ${scrolled
             ? "w-[110px] md:w-[100px] lg:w-[120px] xl:w-[180px] h-[38px] md:h-[42px] lg:h-[50px] xl:h-[58px]"
             : "w-[140px] md:w-[130px] lg:w-[160px] xl:w-[240px] h-[50px] md:h-[60px] lg:h-[70px] xl:h-[82px]"
@@ -105,9 +109,10 @@ export default function Navbar({ preloadedSettings = null }) {
             src="/Peckers Logo 1 [Vectorized].svg"
             alt="Peckers Logo"
             fill
-            className="object-contain"
+            className="object-contain z-[2]"
             priority
           />
+          <FestiveHat />
         </Link>
       </div>
 

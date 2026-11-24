@@ -1,0 +1,286 @@
+/* Santa hat on the "P" of the wordmark. See app/lib/festive-hat.js for the
+   numbers; this file only describes the motion.
+
+   Two rules keep it smooth, and breaking either one brings back visible
+   stutter:
+
+   1. Only `transform` and `opacity` animate. A changing `filter` cannot run on
+      the compositor, so it drags the whole animation onto the main thread and
+      the hat's soft fur edge is expensive to redraw 60 times a second. The
+      darkening as it recedes, and the shadow it casts, are therefore separate
+      masked layers whose opacity fades, not filters on the hat.
+   2. The keyframes are sampled densely and played `linear`. A timing function
+      is re-applied between every pair of keyframes, so a handful of keyframes
+      with an ease curve speeds up and slows down once per pair, which reads as
+      juddering even at a perfect 60fps.
+
+   The keyframe blocks below are generated from a damped spring; edit the
+   motion by regenerating them rather than by hand. */
+
+/* The logo box does not share the artwork's 1049:366 ratio at every
+   breakpoint, so `object-contain` letterboxes the wordmark by a different
+   amount at each size. This box reproduces exactly where the artwork lands,
+   which is what the percentage placement is measured against. It must not get
+   a transform, or it would form a stacking context and the hat could never
+   pass behind the letters. */
+.fit {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 100%;
+  width: min(100%, calc(100cqh * 1049 / 366));
+  aspect-ratio: 1049 / 366;
+  pointer-events: none;
+}
+
+/* The box is the only thing that moves. */
+.hatBox {
+  position: absolute;
+  left: var(--pk-hat-left);
+  top: var(--pk-hat-top);
+  width: var(--pk-hat-width);
+  aspect-ratio: var(--pk-hat-ratio);
+  transform-origin: 62% 82%;          /* where the brim meets the top of the P */
+  transform: rotate(var(--pk-hat-tilt));
+  opacity: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.hat {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* A black copy of the hat, cut to its own silhouette. Fading this in and out
+   is what makes the hat darken as it recedes behind the letters. */
+.shade {
+  position: absolute;
+  inset: 0;
+  background: #04060b;
+  opacity: 0;
+  -webkit-mask: var(--pk-hat-mask);
+  mask: var(--pk-hat-mask);
+}
+
+/* The shadow it casts on the letter. Its own layer rather than a drop-shadow
+   filter, so it can fade; a filter is always at full strength and would snap
+   on the moment the hat crosses in front of the P. The blur never changes. */
+.shadow {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  transform: translate(1.5%, 5.5%);
+  filter: blur(1.3px);
+  -webkit-mask: var(--pk-hat-mask);
+  mask: var(--pk-hat-mask);
+}
+
+.star {
+  position: absolute;
+  width: 5%;
+  aspect-ratio: 1;
+  z-index: 5;
+  opacity: 0;
+  pointer-events: none;
+}
+.star svg { display: block; width: 100%; height: 100%; }
+.s1 { left: 1.8%; top: -5%; }
+.s2 { left: 17%;  top: -14%; width: 3.4%; }
+.s3 { left: 9%;   top: 15%;  width: 2.6%; }
+
+.playing .hatBox {
+  animation: hatCycle var(--pk-cycle) linear infinite;
+  will-change: transform, opacity;
+}
+.playing .shade {
+  animation: shadeCycle var(--pk-cycle) linear infinite;
+  will-change: opacity;
+}
+.playing .shadow {
+  animation: shadowCycle var(--pk-cycle) linear infinite;
+  will-change: opacity;
+}
+.playing .star { animation: starCycle var(--pk-cycle) linear infinite; }
+.playing .s2 { animation-delay: calc(var(--pk-cycle) * 0.025); }
+.playing .s3 { animation-delay: calc(var(--pk-cycle) * 0.045); }
+
+/* ONE ROUND. Grow 0-49%, sit 49-69%, shrink away 69-98%, short gap to 100%.
+   The arrival is a damped spring. The departure winds up a little and then
+   shrinks at a constant ratio, which is what makes it read as even all the way
+   down rather than snapping out at the end. It passes in front of the letters
+   once it is over 45% size and ducks back behind below 55%, so the wordmark
+   only ever cuts across it while it is small. */
+@keyframes hatCycle {
+  0%       { opacity: 0.000; transform: translateY(9%) scale(0.1200) rotate(calc(var(--pk-hat-tilt) + -21.00deg)); z-index: 1; }
+  1.202%   { opacity: 0.908; transform: translateY(9%) scale(0.1200) rotate(calc(var(--pk-hat-tilt) + -21.00deg)); z-index: 1; }
+  2.405%   { opacity: 1.000; transform: translateY(7.746%) scale(0.1375) rotate(calc(var(--pk-hat-tilt) + -20.58deg)); z-index: 1; }
+  3.607%   { opacity: 1.000; transform: translateY(6.587%) scale(0.1855) rotate(calc(var(--pk-hat-tilt) + -19.43deg)); z-index: 1; }
+  4.81%    { opacity: 1.000; transform: translateY(5.55%) scale(0.2549) rotate(calc(var(--pk-hat-tilt) + -17.73deg)); z-index: 1; }
+  6.012%   { opacity: 1.000; transform: translateY(4.627%) scale(0.3379) rotate(calc(var(--pk-hat-tilt) + -15.68deg)); z-index: 1; }
+  7.215%   { opacity: 1.000; transform: translateY(3.814%) scale(0.4281) rotate(calc(var(--pk-hat-tilt) + -13.42deg)); z-index: 1; }
+  8.417%   { opacity: 1.000; transform: translateY(3.101%) scale(0.5202) rotate(calc(var(--pk-hat-tilt) + -11.10deg)); z-index: 3; }
+  9.62%    { opacity: 1.000; transform: translateY(2.483%) scale(0.6101) rotate(calc(var(--pk-hat-tilt) + -8.81deg)); z-index: 3; }
+  10.82%   { opacity: 1.000; transform: translateY(1.954%) scale(0.6946) rotate(calc(var(--pk-hat-tilt) + -6.65deg)); z-index: 3; }
+  12.02%   { opacity: 1.000; transform: translateY(1.505%) scale(0.7716) rotate(calc(var(--pk-hat-tilt) + -4.67deg)); z-index: 3; }
+  13.23%   { opacity: 1.000; transform: translateY(1.131%) scale(0.8399) rotate(calc(var(--pk-hat-tilt) + -2.92deg)); z-index: 3; }
+  14.43%   { opacity: 1.000; transform: translateY(0.8251%) scale(0.8986) rotate(calc(var(--pk-hat-tilt) + -1.41deg)); z-index: 3; }
+  15.63%   { opacity: 1.000; transform: translateY(0.5798%) scale(0.9478) rotate(calc(var(--pk-hat-tilt) + -0.16deg)); z-index: 3; }
+  16.83%   { opacity: 1.000; transform: translateY(0.3887%) scale(0.9875) rotate(calc(var(--pk-hat-tilt) + 0.83deg)); z-index: 3; }
+  18.04%   { opacity: 1.000; transform: translateY(0.245%) scale(1.0185) rotate(calc(var(--pk-hat-tilt) + 1.58deg)); z-index: 3; }
+  19.24%   { opacity: 1.000; transform: translateY(0.1419%) scale(1.0416) rotate(calc(var(--pk-hat-tilt) + 2.12deg)); z-index: 3; }
+  20.44%   { opacity: 1.000; transform: translateY(0.07281%) scale(1.0576) rotate(calc(var(--pk-hat-tilt) + 2.45deg)); z-index: 3; }
+  21.64%   { opacity: 1.000; transform: translateY(0.03081%) scale(1.0676) rotate(calc(var(--pk-hat-tilt) + 2.62deg)); z-index: 3; }
+  22.85%   { opacity: 1.000; transform: translateY(0.009187%) scale(1.0725) rotate(calc(var(--pk-hat-tilt) + 2.65deg)); z-index: 3; }
+  24.05%   { opacity: 1.000; transform: translateY(0.00117%) scale(1.0734) rotate(calc(var(--pk-hat-tilt) + 2.56deg)); z-index: 3; }
+  25.25%   { opacity: 1.000; transform: translateY(2.201e-09%) scale(1.0711) rotate(calc(var(--pk-hat-tilt) + 2.39deg)); z-index: 3; }
+  26.45%   { opacity: 1.000; transform: translateY(0%) scale(1.0666) rotate(calc(var(--pk-hat-tilt) + 2.16deg)); z-index: 3; }
+  27.66%   { opacity: 1.000; transform: translateY(0%) scale(1.0604) rotate(calc(var(--pk-hat-tilt) + 1.89deg)); z-index: 3; }
+  28.86%   { opacity: 1.000; transform: translateY(0%) scale(1.0532) rotate(calc(var(--pk-hat-tilt) + 1.60deg)); z-index: 3; }
+  30.06%   { opacity: 1.000; transform: translateY(0%) scale(1.0456) rotate(calc(var(--pk-hat-tilt) + 1.31deg)); z-index: 3; }
+  31.26%   { opacity: 1.000; transform: translateY(0%) scale(1.0380) rotate(calc(var(--pk-hat-tilt) + 1.03deg)); z-index: 3; }
+  32.47%   { opacity: 1.000; transform: translateY(0%) scale(1.0305) rotate(calc(var(--pk-hat-tilt) + 0.76deg)); z-index: 3; }
+  33.67%   { opacity: 1.000; transform: translateY(0%) scale(1.0236) rotate(calc(var(--pk-hat-tilt) + 0.52deg)); z-index: 3; }
+  34.87%   { opacity: 1.000; transform: translateY(0%) scale(1.0174) rotate(calc(var(--pk-hat-tilt) + 0.31deg)); z-index: 3; }
+  36.07%   { opacity: 1.000; transform: translateY(0%) scale(1.0119) rotate(calc(var(--pk-hat-tilt) + 0.13deg)); z-index: 3; }
+  37.28%   { opacity: 1.000; transform: translateY(0%) scale(1.0072) rotate(calc(var(--pk-hat-tilt) + -0.02deg)); z-index: 3; }
+  38.48%   { opacity: 1.000; transform: translateY(0%) scale(1.0034) rotate(calc(var(--pk-hat-tilt) + -0.14deg)); z-index: 3; }
+  39.68%   { opacity: 1.000; transform: translateY(0%) scale(1.0002) rotate(calc(var(--pk-hat-tilt) + -0.22deg)); z-index: 3; }
+  40.88%   { opacity: 1.000; transform: translateY(0%) scale(0.9981) rotate(calc(var(--pk-hat-tilt) + -0.25deg)); z-index: 3; }
+  42.09%   { opacity: 1.000; transform: translateY(0%) scale(0.9970) rotate(calc(var(--pk-hat-tilt) + -0.24deg)); z-index: 3; }
+  43.29%   { opacity: 1.000; transform: translateY(0%) scale(0.9969) rotate(calc(var(--pk-hat-tilt) + -0.20deg)); z-index: 3; }
+  44.49%   { opacity: 1.000; transform: translateY(0%) scale(0.9975) rotate(calc(var(--pk-hat-tilt) + -0.14deg)); z-index: 3; }
+  45.69%   { opacity: 1.000; transform: translateY(0%) scale(0.9984) rotate(calc(var(--pk-hat-tilt) + -0.09deg)); z-index: 3; }
+  46.9%    { opacity: 1.000; transform: translateY(0%) scale(0.9992) rotate(calc(var(--pk-hat-tilt) + -0.04deg)); z-index: 3; }
+  48.1%    { opacity: 1.000; transform: translateY(0%) scale(0.9998) rotate(calc(var(--pk-hat-tilt) + -0.01deg)); z-index: 3; }
+  49.3%    { opacity: 1.000; transform: translateY(0%) scale(1.0000) rotate(var(--pk-hat-tilt)); z-index: 3; }
+  68.5%    { opacity: 1.000; transform: translateY(0%) scale(1.0000) rotate(var(--pk-hat-tilt)); z-index: 3; }
+  69.48%   { opacity: 1.000; transform: translateY(0%) scale(1.0192) rotate(var(--pk-hat-tilt)); z-index: 3; }
+  70.46%   { opacity: 1.000; transform: translateY(0%) scale(1.0321) rotate(var(--pk-hat-tilt)); z-index: 3; }
+  71.44%   { opacity: 1.000; transform: translateY(0%) scale(1.0345) rotate(var(--pk-hat-tilt)); z-index: 3; }
+  72.42%   { opacity: 1.000; transform: translateY(0.006136%) scale(1.0240) rotate(calc(var(--pk-hat-tilt) + -0.01deg)); z-index: 3; }
+  73.4%    { opacity: 1.000; transform: translateY(0.07325%) scale(0.9908) rotate(calc(var(--pk-hat-tilt) + -0.17deg)); z-index: 3; }
+  74.38%   { opacity: 1.000; transform: translateY(0.2096%) scale(0.9518) rotate(calc(var(--pk-hat-tilt) + -0.49deg)); z-index: 3; }
+  75.36%   { opacity: 1.000; transform: translateY(0.4094%) scale(0.9081) rotate(calc(var(--pk-hat-tilt) + -0.96deg)); z-index: 3; }
+  76.34%   { opacity: 1.000; transform: translateY(0.6667%) scale(0.8547) rotate(calc(var(--pk-hat-tilt) + -1.56deg)); z-index: 3; }
+  77.32%   { opacity: 1.000; transform: translateY(0.9756%) scale(0.7947) rotate(calc(var(--pk-hat-tilt) + -2.28deg)); z-index: 3; }
+  78.3%    { opacity: 1.000; transform: translateY(1.33%) scale(0.7310) rotate(calc(var(--pk-hat-tilt) + -3.10deg)); z-index: 3; }
+  79.28%   { opacity: 1.000; transform: translateY(1.725%) scale(0.6661) rotate(calc(var(--pk-hat-tilt) + -4.02deg)); z-index: 3; }
+  80.26%   { opacity: 1.000; transform: translateY(2.154%) scale(0.6021) rotate(calc(var(--pk-hat-tilt) + -5.03deg)); z-index: 3; }
+  81.24%   { opacity: 1.000; transform: translateY(2.61%) scale(0.5406) rotate(calc(var(--pk-hat-tilt) + -6.09deg)); z-index: 1; }
+  82.22%   { opacity: 1.000; transform: translateY(3.09%) scale(0.4829) rotate(calc(var(--pk-hat-tilt) + -7.21deg)); z-index: 1; }
+  83.2%    { opacity: 1.000; transform: translateY(3.585%) scale(0.4297) rotate(calc(var(--pk-hat-tilt) + -8.37deg)); z-index: 1; }
+  84.18%   { opacity: 1.000; transform: translateY(4.091%) scale(0.3814) rotate(calc(var(--pk-hat-tilt) + -9.55deg)); z-index: 1; }
+  85.16%   { opacity: 1.000; transform: translateY(4.602%) scale(0.3382) rotate(calc(var(--pk-hat-tilt) + -10.74deg)); z-index: 1; }
+  86.14%   { opacity: 1.000; transform: translateY(5.112%) scale(0.2999) rotate(calc(var(--pk-hat-tilt) + -11.93deg)); z-index: 1; }
+  87.12%   { opacity: 1.000; transform: translateY(5.615%) scale(0.2664) rotate(calc(var(--pk-hat-tilt) + -13.10deg)); z-index: 1; }
+  88.1%    { opacity: 1.000; transform: translateY(6.104%) scale(0.2374) rotate(calc(var(--pk-hat-tilt) + -14.24deg)); z-index: 1; }
+  89.08%   { opacity: 1.000; transform: translateY(6.575%) scale(0.2125) rotate(calc(var(--pk-hat-tilt) + -15.34deg)); z-index: 1; }
+  90.06%   { opacity: 1.000; transform: translateY(7.022%) scale(0.1913) rotate(calc(var(--pk-hat-tilt) + -16.38deg)); z-index: 1; }
+  91.04%   { opacity: 1.000; transform: translateY(7.437%) scale(0.1734) rotate(calc(var(--pk-hat-tilt) + -17.35deg)); z-index: 1; }
+  92.02%   { opacity: 0.867; transform: translateY(7.817%) scale(0.1586) rotate(calc(var(--pk-hat-tilt) + -18.24deg)); z-index: 1; }
+  93%      { opacity: 0.544; transform: translateY(8.154%) scale(0.1465) rotate(calc(var(--pk-hat-tilt) + -19.03deg)); z-index: 1; }
+  93.98%   { opacity: 0.264; transform: translateY(8.443%) scale(0.1368) rotate(calc(var(--pk-hat-tilt) + -19.70deg)); z-index: 1; }
+  94.96%   { opacity: 0.094; transform: translateY(8.678%) scale(0.1295) rotate(calc(var(--pk-hat-tilt) + -20.25deg)); z-index: 1; }
+  95.94%   { opacity: 0.020; transform: translateY(8.853%) scale(0.1242) rotate(calc(var(--pk-hat-tilt) + -20.66deg)); z-index: 1; }
+  96.92%   { opacity: 0.001; transform: translateY(8.962%) scale(0.1211) rotate(calc(var(--pk-hat-tilt) + -20.91deg)); z-index: 1; }
+  97.9%    { opacity: 0.000; transform: translateY(9%) scale(0.1200) rotate(calc(var(--pk-hat-tilt) + -21.00deg)); z-index: 1; }
+  100%     { opacity: 0.000; transform: translateY(9%) scale(0.1200) rotate(calc(var(--pk-hat-tilt) + -21.00deg)); z-index: 1; }
+}
+
+@keyframes shadeCycle {
+  0%       { opacity: 0.880; }
+  3.607%   { opacity: 0.873; }
+  7.215%   { opacity: 0.392; }
+  10.82%   { opacity: 0.000; }
+  14.43%   { opacity: 0.000; }
+  18.04%   { opacity: 0.000; }
+  21.64%   { opacity: 0.000; }
+  25.25%   { opacity: 0.000; }
+  28.86%   { opacity: 0.000; }
+  32.47%   { opacity: 0.000; }
+  36.07%   { opacity: 0.000; }
+  39.68%   { opacity: 0.000; }
+  43.29%   { opacity: 0.000; }
+  46.9%    { opacity: 0.000; }
+  49.3%    { opacity: 0.000; }
+  68.5%    { opacity: 0.000; }
+  70.46%   { opacity: 0.000; }
+  72.42%   { opacity: 0.000; }
+  74.38%   { opacity: 0.000; }
+  76.34%   { opacity: 0.000; }
+  78.3%    { opacity: 0.000; }
+  80.26%   { opacity: 0.033; }
+  82.22%   { opacity: 0.253; }
+  84.18%   { opacity: 0.515; }
+  86.14%   { opacity: 0.712; }
+  88.1%    { opacity: 0.823; }
+  90.06%   { opacity: 0.870; }
+  92.02%   { opacity: 0.880; }
+  93.98%   { opacity: 0.880; }
+  95.94%   { opacity: 0.880; }
+  97.9%    { opacity: 0.880; }
+  100%     { opacity: 0.880; }
+}
+
+/* Rises over roughly half a second from the crossover, and is gone again just
+   before the hat slips back behind the letters. */
+@keyframes shadowCycle {
+  0%       { opacity: calc(var(--pk-shadow) * 0.000); }
+  3.607%   { opacity: calc(var(--pk-shadow) * 0.000); }
+  7.215%   { opacity: calc(var(--pk-shadow) * 0.000); }
+  10.82%   { opacity: calc(var(--pk-shadow) * 0.071); }
+  14.43%   { opacity: calc(var(--pk-shadow) * 0.361); }
+  18.04%   { opacity: calc(var(--pk-shadow) * 0.719); }
+  21.64%   { opacity: calc(var(--pk-shadow) * 0.969); }
+  25.25%   { opacity: calc(var(--pk-shadow) * 1.000); }
+  28.86%   { opacity: calc(var(--pk-shadow) * 1.000); }
+  32.47%   { opacity: calc(var(--pk-shadow) * 1.000); }
+  36.07%   { opacity: calc(var(--pk-shadow) * 1.000); }
+  39.68%   { opacity: calc(var(--pk-shadow) * 1.000); }
+  43.29%   { opacity: calc(var(--pk-shadow) * 1.000); }
+  46.9%    { opacity: calc(var(--pk-shadow) * 1.000); }
+  49.3%    { opacity: calc(var(--pk-shadow) * 1.000); }
+  68.5%    { opacity: calc(var(--pk-shadow) * 1.000); }
+  70.46%   { opacity: calc(var(--pk-shadow) * 1.000); }
+  72.42%   { opacity: calc(var(--pk-shadow) * 1.000); }
+  74.38%   { opacity: calc(var(--pk-shadow) * 0.986); }
+  76.34%   { opacity: calc(var(--pk-shadow) * 0.767); }
+  78.3%    { opacity: calc(var(--pk-shadow) * 0.320); }
+  80.26%   { opacity: calc(var(--pk-shadow) * 0.009); }
+  82.22%   { opacity: calc(var(--pk-shadow) * 0.000); }
+  84.18%   { opacity: calc(var(--pk-shadow) * 0.000); }
+  86.14%   { opacity: calc(var(--pk-shadow) * 0.000); }
+  88.1%    { opacity: calc(var(--pk-shadow) * 0.000); }
+  90.06%   { opacity: calc(var(--pk-shadow) * 0.000); }
+  92.02%   { opacity: calc(var(--pk-shadow) * 0.000); }
+  93.98%   { opacity: calc(var(--pk-shadow) * 0.000); }
+  95.94%   { opacity: calc(var(--pk-shadow) * 0.000); }
+  97.9%    { opacity: calc(var(--pk-shadow) * 0.000); }
+  100%     { opacity: calc(var(--pk-shadow) * 0.000); }
+}
+
+@keyframes starCycle {
+  0%, 45%   { opacity: 0; transform: scale(0.2) rotate(0deg); }
+  51%       { opacity: 1; transform: scale(1) rotate(35deg); }
+  59%, 100% { opacity: 0; transform: scale(0.45) rotate(70deg); }
+}
+
+/* Show the hat resting on the P, with its shadow, and skip the motion. */
+@media (prefers-reduced-motion: reduce) {
+  .playing .hatBox {
+    animation: none;
+    opacity: 1;
+    z-index: 3;
+  }
+  .playing .shade,
+  .playing .star { animation: none; }
+  .playing .shadow {
+    animation: none;
+    opacity: var(--pk-shadow);
+  }
+}
