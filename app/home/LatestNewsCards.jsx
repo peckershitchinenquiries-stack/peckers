@@ -35,6 +35,12 @@ export default function LatestNewsCards({ news = [], onActiveIndexChange }) {
   const [centerIdx, setCenterIdx] = useState(0);
   const animatingRef = useRef(false);
 
+  // Video cards never autoplay: browsers block sound unless a person asks for
+  // it, so the card sits on its poster until the play button is pressed. Only
+  // one card may play at a time, tracked here by card id.
+  const [playingId, setPlayingId] = useState(null);
+  const videoRefs = useRef({});
+
   const N = images.length;
 
   useEffect(() => {
@@ -42,6 +48,30 @@ export default function LatestNewsCards({ news = [], onActiveIndexChange }) {
       onActiveIndexChange(centerIdx);
     }
   }, [centerIdx, onActiveIndexChange]);
+
+  // Sliding away stops whatever was playing — otherwise a clip keeps talking
+  // from a card that has rotated off to the side.
+  useEffect(() => {
+    Object.values(videoRefs.current).forEach((el) => {
+      if (!el) return;
+      el.pause();
+      el.currentTime = 0;
+      el.muted = true;
+    });
+    setPlayingId(null);
+  }, [centerIdx]);
+
+  const playCard = useCallback((cardId) => {
+    const el = videoRefs.current[cardId];
+    if (!el) return;
+    // The click itself is the user gesture that buys us sound, so unmute
+    // before calling play() rather than after.
+    el.muted = false;
+    el.volume = 1;
+    const started = el.play();
+    if (started?.catch) started.catch(() => { });
+    setPlayingId(cardId);
+  }, []);
 
   if (N === 0) return null;
 
@@ -186,27 +216,55 @@ export default function LatestNewsCards({ news = [], onActiveIndexChange }) {
             }}
           >
             {images[card.imageIndex].videoUrl ? (
-              <video
-                src={images[card.imageIndex].videoUrl}
-                // Never pass "" as a poster — the browser treats it as a
-                // relative URL, re-downloads this page and fails to decode it.
-                poster={
-                  images[card.imageIndex].image?.asset
-                    ? urlFor(images[card.imageIndex].image)
-                      .width(900)
-                      .quality(75)
-                      .auto("format")
-                      .url()
-                    : undefined
-                }
-                autoPlay
-                muted
-                loop
-                playsInline
-                preload="metadata"
-                aria-label={`${images[card.imageIndex].title || "Latest News"} | Peckers Chicken Hertfordshire`}
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
-              />
+              <>
+                <video
+                  ref={(el) => {
+                    videoRefs.current[card.id] = el;
+                  }}
+                  src={images[card.imageIndex].videoUrl}
+                  // Never pass "" as a poster — the browser treats it as a
+                  // relative URL, re-downloads this page and fails to decode it.
+                  poster={
+                    images[card.imageIndex].image?.asset
+                      ? urlFor(images[card.imageIndex].image)
+                        .width(900)
+                        .quality(75)
+                        .auto("format")
+                        .url()
+                      : undefined
+                  }
+                  playsInline
+                  preload="metadata"
+                  controls={playingId === card.id}
+                  controlsList="nodownload"
+                  onEnded={() => setPlayingId(null)}
+                  aria-label={`${images[card.imageIndex].title || "Latest News"} | Peckers Chicken Hertfordshire`}
+                  className={`absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out ${playingId === card.id ? "" : "group-hover:scale-110"
+                    }`}
+                />
+                {/* Only the centre card is playable. The side cards are the
+                    slider's own prev/next buttons, so a play button there
+                    would swallow the click that moves the slider. */}
+                {card.slot === 0 && playingId !== card.id && (
+                  <button
+                    type="button"
+                    onClick={() => playCard(card.id)}
+                    aria-label={`Play video: ${images[card.imageIndex].title || "Latest News"}`}
+                    className="absolute inset-0 z-20 flex items-center justify-center bg-black/10 transition-colors duration-300 hover:bg-black/25 cursor-pointer"
+                  >
+                    <span className="flex items-center justify-center w-[16vw] h-[16vw] md:w-[7vw] md:h-[7vw] xl:w-[5vw] xl:h-[5vw] rounded-full bg-white/90 shadow-lg transition-transform duration-300 hover:scale-110">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        aria-hidden="true"
+                        className="w-[6vw] h-[6vw] md:w-[2.6vw] md:h-[2.6vw] xl:w-[1.8vw] xl:h-[1.8vw] text-black translate-x-[8%]"
+                      >
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </span>
+                  </button>
+                )}
+              </>
             ) : (
               <Image
                 src={urlFor(images[card.imageIndex].image).url()}
