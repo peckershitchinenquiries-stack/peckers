@@ -73,6 +73,7 @@ export default async function HomePage() {
     _id,
     title,
     image,
+    "videoUrl": video.asset->url,
     order,
     caption
   }`

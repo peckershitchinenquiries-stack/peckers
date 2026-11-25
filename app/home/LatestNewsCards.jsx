@@ -25,7 +25,10 @@ const createInitialCards = (centerIdx, totalImages) => {
 };
 
 export default function LatestNewsCards({ news = [], onActiveIndexChange }) {
-  const images = news.filter((item) => item.image?.asset);
+  // A card earns a slot if it has an image, a video, or both. The image is the
+  // poster frame when a video is present, so video-only cards are allowed but
+  // will show black until the first frame decodes.
+  const images = news.filter((item) => item.image?.asset || item.videoUrl);
   const [cards, setCards] = useState(
     images.length > 0 ? createInitialCards(0, images.length) : [],
   );
@@ -182,13 +185,37 @@ export default function LatestNewsCards({ news = [], onActiveIndexChange }) {
                 "transform .75s cubic-bezier(.22,1,.36,1), opacity .5s ease, filter .5s ease",
             }}
           >
-            <Image
-              src={urlFor(images[card.imageIndex].image).url()}
-              alt={`${images[card.imageIndex].title || "Latest News"} | Peckers Chicken Hertfordshire`}
-              fill
-              sizes="(max-width:768px) 100vw, 33vw"
-              className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
-            />
+            {images[card.imageIndex].videoUrl ? (
+              <video
+                src={images[card.imageIndex].videoUrl}
+                // Never pass "" as a poster — the browser treats it as a
+                // relative URL, re-downloads this page and fails to decode it.
+                poster={
+                  images[card.imageIndex].image?.asset
+                    ? urlFor(images[card.imageIndex].image)
+                      .width(900)
+                      .quality(75)
+                      .auto("format")
+                      .url()
+                    : undefined
+                }
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="metadata"
+                aria-label={`${images[card.imageIndex].title || "Latest News"} | Peckers Chicken Hertfordshire`}
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+              />
+            ) : (
+              <Image
+                src={urlFor(images[card.imageIndex].image).url()}
+                alt={`${images[card.imageIndex].title || "Latest News"} | Peckers Chicken Hertfordshire`}
+                fill
+                sizes="(max-width:768px) 100vw, 33vw"
+                className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+              />
+            )}
           </div>
         ))}
 
