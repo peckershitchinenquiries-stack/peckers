@@ -43,7 +43,7 @@ export const FESTIVE_HAT = {
   // One full round in seconds: the hat grows for 49% of it, rests on the P for
   // 19%, shrinks away over 29%, then waits out a 2% gap before going again.
   // Raise this to make the whole thing slower and less frequent.
-  roundSeconds: 3.75,
+  roundSeconds: 3.3,
 
   // --- Shadow --------------------------------------------------------------
   // How dark the shadow under the hat gets once it has settled on the letter,

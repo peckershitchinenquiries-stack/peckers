@@ -7,6 +7,14 @@ import Link from "next/link";
 import HeaderActionButton from "./HeaderActionButton";
 import { readConsent } from "../lib/cookie-consent";
 import {
+  isPopupAudioSounding,
+  popupAudioAvailable,
+  primePopupAudio,
+  startPopupAudio,
+  stopPopupAudio,
+  togglePopupAudio,
+} from "../lib/popup-audio";
+import {
   PROMO_POPUP,
   PROMO_STORAGE_KEY,
   isPromoActive,
@@ -29,11 +37,15 @@ export default function PromoPopup({ show, lenisRef }) {
   // during render (same reasoning as CookieConsent).
   const [open, setOpen] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+  // Whether sound is coming out right now, which is what the speaker button
+  // draws itself from. See the effect below for why it is polled.
+  const [soundOn, setSoundOn] = useState(false);
   const closeButtonRef = useRef(null);
 
   const dismiss = useCallback(() => {
     setOpen(false);
     setDismissed(true);
+
     try {
       window.sessionStorage.setItem(PROMO_STORAGE_KEY, PROMO_POPUP.version);
     } catch {
@@ -98,6 +110,64 @@ export default function PromoPopup({ show, lenisRef }) {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [open, dismiss]);
+
+  // Ask the browser's permission to make a sound at the first moment there is
+  // a real finger on the page — normally the tap that answers the cookie
+  // banner, a second or two before this popup appears. Without it the banner
+  // opens in silence on phones; see app/lib/popup-audio.js for the full story.
+  // Nothing is audible here.
+  //
+  // Every one of these events has to be listened for, because which of them
+  // counts as "a real finger" depends on what the visitor is using. A browser
+  // only grants the permission during an event it considers deliberate, and
+  // for a TOUCHSCREEN that list does not include pointerdown — on a finger,
+  // pointerdown is only the start of what might still turn out to be a scroll,
+  // so permission is not granted until pointerup, touchend or click. A mouse
+  // is the other way round: pointerdown counts immediately. Listening for
+  // pointerdown alone therefore works on every desktop and no phone, which is
+  // exactly the bug this replaced.
+  //
+  // Priming is free after the first success — the call does nothing once
+  // permission is in hand — so the duplicates these fire together cost
+  // nothing. Capture phase, so it still runs if the tap lands on something
+  // that stops the event before it bubbles.
+  useEffect(() => {
+    const types = ["pointerdown", "pointerup", "touchend", "click", "keydown"];
+    const prime = () => primePopupAudio();
+    types.forEach((type) => window.addEventListener(type, prime, true));
+    return () =>
+      types.forEach((type) => window.removeEventListener(type, prime, true));
+  }, []);
+
+  // Music while the banner is up, for the number of runs set in the config.
+  // Tied to the banner being on screen rather than to the close button, so
+  // every way out of the popup — the X, Escape, the backdrop, the button on
+  // the banner, or a route change that unmounts it — stops the sound through
+  // this one cleanup, and none of them can leave it playing to a page with no
+  // popup on it.
+  // See app/lib/popup-audio.js for the file, the volume, how many times it
+  // plays and the switch.
+  useEffect(() => {
+    if (!open) return;
+    startPopupAudio();
+    return () => stopPopupAudio();
+  }, [open]);
+
+  // Keep the speaker button honest about what the page is actually doing.
+  //
+  // Polled rather than driven by events, because the thing being watched is
+  // not one event: the music may start late (the browser refused it and a
+  // later click let it through), stop on its own after its last run, or be
+  // stopped by the button itself. Four checks a second is cheap, costs
+  // nothing when the banner is shut, and cannot miss any of those.
+  useEffect(() => {
+    if (!open || !popupAudioAvailable()) return;
+
+    const read = () => setSoundOn(isPopupAudioSounding());
+    read();
+    const poll = setInterval(read, 250);
+    return () => clearInterval(poll);
+  }, [open]);
 
   // Move focus to the close button so keyboard users land on the way out.
   useEffect(() => {
@@ -168,10 +238,13 @@ export default function PromoPopup({ show, lenisRef }) {
   // The dialog is sized by width alone and the image simply fills it; the CTA
   // button sits centred underneath at its own natural size.
   // The width formula picks whichever limit bites first:
-  //   maxPercent      — 96%, so there is always an even margin down both
-  //                     sides. A percentage rather than vw so a desktop
-  //                     scrollbar can't push the dialog wider than the
-  //                     visible page.
+  //   maxPercent      — how much of the window's width the banner may take,
+  //                     so there is always an even margin down both sides. A
+  //                     percentage rather than vw so a desktop scrollbar
+  //                     can't push the dialog wider than the visible page.
+  //                     Phones get nearly all of it (small screens have none
+  //                     to spare); desktops are held well short of the edges
+  //                     — see PORTRAIT_FILL and LANDSCAPE_FILL below.
   //   maxWidth        — stops the artwork ballooning on large desktops
   //   (height budget) — the height left after the button, widened by the crop
   //                     allowance below and converted back to a width through
@@ -194,15 +267,33 @@ export default function PromoPopup({ show, lenisRef }) {
   const artMaxWidth = (width, height) =>
     artRatio(width, height) >= 1 ? 620 : Math.round((width || 960) * 1.25);
 
-  // Vertical space held back for the CTA button, its gap, and a little
-  // breathing room. Raise it to shrink the artwork, lower it to grow the
-  // artwork — but keep it above (button height + 12px gap) or the two crowd.
-  // With no button the artwork takes nearly the whole window, holding back
-  // only a hairline so it never sits flush against the top and bottom edges.
+  // How much of the window's width the banner may fill, per orientation.
+  // These are the two numbers to turn if the popup wants more or less room.
+  //
+  // A phone has no width to give away, so a portrait screen keeps the old
+  // near-full-bleed figure. A desktop monitor has width to spare, and a banner
+  // run right out to the edges there reads as a takeover rather than as a
+  // panel laid over the page — so a landscape screen holds the artwork well
+  // short of both edges.
+  const PORTRAIT_FILL = "96%";
+  const LANDSCAPE_FILL = "72%";
+
+  // Vertical space held back for the CTA button, its gap, and breathing room.
+  // Raise it to shrink the artwork, lower it to grow the artwork — but keep it
+  // above (button height + 12px gap) or the two crowd.
+  //
+  // Same split as the widths, and for the same reason: a phone holds back only
+  // a hairline so the poster never sits flush against the top and bottom
+  // edges, while a desktop keeps a real band of page visible above and below.
+  // Both matter on desktop, because the window's height is usually what limits
+  // the banner, so a reserve that is too small simply grows the artwork again
+  // and the side margins close back up.
   const reserve = hasCta ? "7.5rem" : "1.5rem";
+  const landscapeReserve = hasCta ? "12.5rem" : "8rem";
 
   // The height of the box the artwork is drawn into, whatever shape it is.
   const maxArtHeight = `calc(100dvh - ${reserve})`;
+  const maxArtHeightLandscape = `calc(100dvh - ${landscapeReserve})`;
 
   // How much of the artwork's own height may be trimmed when the window is too
   // short to show all of it at the width we want.
@@ -230,15 +321,30 @@ export default function PromoPopup({ show, lenisRef }) {
   // The margin is the same on both: wide enough that the banner reads as a
   // panel laid over the page rather than something bleeding off the sides, and
   // no wider, because every pixel it gives up is a pixel of artwork.
-  const artWidth = (width, height, maxPercent) => {
+  const artWidth = (width, height, maxPercent, heightBudget) => {
     const ratio = artRatio(width, height) * (1 - MAX_CROP);
-    return `min(${maxPercent}, ${artMaxWidth(width, height)}px, calc(${maxArtHeight} / ${ratio}))`;
+    return `min(${maxPercent}, ${artMaxWidth(width, height)}px, calc(${heightBudget} / ${ratio}))`;
   };
 
-  const desktopWidth = artWidth(PROMO_POPUP.width, PROMO_POPUP.height, "96%");
+  const desktopWidth = artWidth(
+    PROMO_POPUP.width,
+    PROMO_POPUP.height,
+    LANDSCAPE_FILL,
+    maxArtHeightLandscape
+  );
   const mobileWidth = hasMobileArt
-    ? artWidth(PROMO_POPUP.mobileWidth, PROMO_POPUP.mobileHeight, "96%")
-    : artWidth(PROMO_POPUP.width, PROMO_POPUP.height, "96%");
+    ? artWidth(
+        PROMO_POPUP.mobileWidth,
+        PROMO_POPUP.mobileHeight,
+        PORTRAIT_FILL,
+        maxArtHeight
+      )
+    : artWidth(
+        PROMO_POPUP.width,
+        PROMO_POPUP.height,
+        PORTRAIT_FILL,
+        maxArtHeight
+      );
 
   // Each artwork's own shape, handed to the frame as an aspect-ratio so its
   // height follows whatever width the dialog settled on. Written as a ratio
@@ -275,7 +381,7 @@ export default function PromoPopup({ show, lenisRef }) {
   const artwork = (
     <div
       style={frameBorder}
-      className="w-full overflow-hidden aspect-[var(--promo-ar)] max-h-[var(--promo-maxh)] landscape:aspect-[var(--promo-ar-land)]"
+      className="w-full overflow-hidden aspect-[var(--promo-ar)] max-h-[var(--promo-maxh)] landscape:aspect-[var(--promo-ar-land)] landscape:max-h-[var(--promo-maxh-land)]"
     >
       {hasMobileArt && (
         <Image
@@ -378,6 +484,7 @@ export default function PromoPopup({ show, lenisRef }) {
               "--promo-ar": mobileAspect,
               "--promo-ar-land": desktopAspect,
               "--promo-maxh": maxArtHeight,
+              "--promo-maxh-land": maxArtHeightLandscape,
             }}
             // One width per artwork, switched on the same orientation query
             // that switches the image itself, so the box can never be sized
@@ -387,6 +494,51 @@ export default function PromoPopup({ show, lenisRef }) {
             {content}
 
             {cta}
+
+            {popupAudioAvailable() && (
+              <button
+                type="button"
+                onClick={togglePopupAudio}
+                aria-label={soundOn ? "Turn the music off" : "Play the music"}
+                // Sits to the left of the close button, in the same style but
+                // deliberately smaller: closing the banner is the thing most
+                // visitors want, and a sound control the same size competes
+                // with it for the eye. 36px keeps it comfortably tappable.
+                //
+                // right-[60px] clears the 44px close button and its 8px inset
+                // with an 8px gap; top-3 is what centres a 36px button against
+                // that 44px one.
+                className="absolute right-[60px] top-3 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-black/70 text-white transition-colors hover:bg-black/90"
+              >
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  {/* The speaker cone itself, drawn either way. */}
+                  <path d="M11 5 6 9H3v6h3l5 4V5Z" />
+                  {soundOn ? (
+                    // Sound coming out: two arcs leaving the cone.
+                    <>
+                      <path d="M15.5 8.5a5 5 0 0 1 0 7" />
+                      <path d="M18.5 5.5a9 9 0 0 1 0 13" />
+                    </>
+                  ) : (
+                    // Silent: the cross every player uses for muted.
+                    <>
+                      <path d="m16 9 5 6" />
+                      <path d="m21 9-5 6" />
+                    </>
+                  )}
+                </svg>
+              </button>
+            )}
 
             <button
               type="button"

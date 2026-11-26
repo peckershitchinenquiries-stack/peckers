@@ -6,13 +6,13 @@
 
 export const PROMO_POPUP = {
   // Master switch. Set to false to turn the popup off completely.
-  enabled: false,
+  enabled: true,
 
   // Identifies this particular promo. Once a visitor closes the popup they
   // won't see it again for the rest of their browsing session. Change this to a
   // new value (e.g. "summer-offer-2027") whenever you put up a NEW promo — that
   // makes it show again to everyone, including people who dismissed the old one.
-  version: "christmas-menu-2026",
+  version: "christmas-menu-2026-live",
 
   // The image to show. Put the file in the "public" folder and write the path
   // starting from there, e.g. a file at public/popup/promo.png is "/popup/promo.png".
@@ -20,7 +20,7 @@ export const PROMO_POPUP = {
 
   // Describes the image for screen readers and search engines. Write a plain
   // sentence saying what the image announces.
-  alt: "Unwrapping soon: the Peckers Christmas menu. New festive flavours, made for sharing, coming this Christmas.",
+  alt: "Now unwrapped: the Peckers Christmas menu. Cranberry burger, cranberry tenders and cranberry fries, in store now.",
 
   // The image's real pixel size. These must match the actual file or the popup
   // will look stretched or squashed. Check the file's dimensions before editing.
@@ -35,7 +35,7 @@ export const PROMO_POPUP = {
   // takes over from 768px up, and on any phone turned sideways, where a wide
   // banner suits the screen far better.
   mobileSrc: "/popup/banner-mobile-final.webp",
-  mobileWidth: 1333,
+  mobileWidth: 1415,
   mobileHeight: 2000,
 
   // Optional link. Leave as null for an image that isn't clickable, or put a
