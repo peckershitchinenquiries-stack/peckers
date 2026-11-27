@@ -79,12 +79,17 @@ export default async function HomePage() {
   }`
   });
 
-  // Fetch locations data on the server (for CoopImages)
+  // Fetch locations data on the server (for CoopImages). The card order and
+  // which towns exist live in app/lib/locations.js; these documents supply the
+  // photograph and can override status, badge and order per town.
   const { data: locationsList } = await sanityFetch({
     query: `*[_type == "location"]{
     _id,
     name,
-    image
+    image,
+    status,
+    badgeText,
+    order
   }`
   });
 

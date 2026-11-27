@@ -1,243 +1,386 @@
 "use client";
-import { useState } from "react";
+
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { client } from "../../sanity/lib/client";
 import { urlFor } from "../../sanity/lib/image";
-``;
+import { mergeStores } from "../lib/locations";
+
+/**
+ * Homepage locations band — a plain scroll row.
+ *
+ * No slots, no conveyor, no transforms. The cards sit side by side in a
+ * horizontally scrollable strip and the arrows simply scroll it by one card,
+ * which is the browser's own scroll rather than an animation we drive. Each
+ * card stays itself the whole time: nothing fades, rotates, dims or changes
+ * place, so there is no motion to get wrong.
+ *
+ * Two shapes, one set of cards. From tablet up every town is in the one
+ * strip, three across on a laptop. On a phone the open stores stack full
+ * width exactly as they do on the live site, and only the towns that have
+ * not opened yet scroll — they take the slot the "We're expanding" card
+ * used to hold. The grouping is done with a wrapper that is display:
+ * contents above the phone breakpoint, so the same markup gives both
+ * layouts and no card is rendered twice.
+ */
 export default function CoopImages({ locations = [] }) {
-  const [town, setTown] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [error, setError] = useState(null);
+  const stores = useMemo(() => mergeStores(locations), [locations]);
+  const openStores = useMemo(
+    () => stores.filter((s) => s.status !== "comingSoon"),
+    [stores],
+  );
+  const soonStores = useMemo(
+    () => stores.filter((s) => s.status === "comingSoon"),
+    [stores],
+  );
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!town.trim() || isSubmitting) return;
+  const rowRef = useRef(null);
+  const soonRef = useRef(null);
+  // Both arrows start hidden and are shown by the first measurement, so a row
+  // that fits on screen never flashes a control that does nothing.
+  const [edges, setEdges] = useState({ start: true, end: true });
 
-    setIsSubmitting(true);
-    setError(null);
-
-    const scriptUrl = process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL;
-
-    if (!scriptUrl) {
-      console.error("NEXT_PUBLIC_GOOGLE_SHEET_URL is not defined");
-      setError("Configuration error. Please try again later.");
-      setIsSubmitting(false);
-      return;
-    }
-
-    try {
-      const response = await fetch(scriptUrl, {
-        method: "POST",
-        mode: "no-cors", // Necessary for Google Apps Script Web Apps to avoid CORS issues
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ town: town.trim() }),
-      });
-
-      // With mode: 'no-cors', we can't see the response, but if it doesn't throw, it likely worked.
-      setSubmitted(true);
-    } catch (err) {
-      console.error("Submission error:", err);
-      setError("Failed to send. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
+  // Whichever element is actually doing the scrolling right now. On a phone
+  // that is the coming-soon strip; above it that strip is display: contents
+  // and so has no box at all, which leaves the whole row.
+  const getScroller = () => {
+    const soon = soonRef.current;
+    return soon && soon.clientWidth > 0 ? soon : rowRef.current;
   };
-  const hitchin = locations.find(
-    (l) => l.name?.trim().toLowerCase() === "hitchin",
-  );
-  const stevenage = locations.find(
-    (l) => l.name?.trim().toLowerCase() === "stevenage",
-  );
 
-  const HITCHIN_IMG = hitchin?.image ? urlFor(hitchin.image).width(1200).quality(80).auto("format").url() : null;
-  const STEVENAGE_IMG = stevenage?.image ? urlFor(stevenage.image).width(1200).quality(80).auto("format").url() : null;
+  useEffect(() => {
+    const update = () => {
+      const el = getScroller();
+      if (!el) return;
+      const max = el.scrollWidth - el.clientWidth;
+      // A couple of pixels of slack: fractional layout widths mean scrollLeft
+      // rarely lands exactly on 0 or on the maximum.
+      setEdges({ start: el.scrollLeft <= 2, end: el.scrollLeft >= max - 2 });
+    };
+
+    const row = rowRef.current;
+    const soon = soonRef.current;
+    update();
+    row?.addEventListener("scroll", update, { passive: true });
+    soon?.addEventListener("scroll", update, { passive: true });
+    // Catches the breakpoint change too, which swaps which element scrolls.
+    const ro = new ResizeObserver(update);
+    if (row) ro.observe(row);
+    if (soon) ro.observe(soon);
+    return () => {
+      row?.removeEventListener("scroll", update);
+      soon?.removeEventListener("scroll", update);
+      ro.disconnect();
+    };
+  }, []);
+
+  const scrollByCard = (dir) => {
+    const el = getScroller();
+    if (!el) return;
+    // One card plus the gap, read off the layout rather than hard-coded, so
+    // every breakpoint moves by exactly one card.
+    const cards = el.querySelectorAll(".coop-card");
+    const step =
+      cards.length > 1
+        ? cards[1].offsetLeft - cards[0].offsetLeft
+        : el.clientWidth;
+    const reduced =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    el.scrollBy({ left: step * dir, behavior: reduced ? "auto" : "smooth" });
+  };
+
+  const renderCard = (store) => {
+    const isSoon = store.status === "comingSoon";
+    const src = store.image
+      ? urlFor(store.image).width(1000).quality(80).auto("format").url()
+      : null;
+
+    const className = [
+      "coop-card",
+      isSoon ? "coop-card--soon" : "coop-card--open",
+    ].join(" ");
+
+    const body = (
+      <>
+        {src && (
+          <Image
+            src={src}
+            alt={store.cardAlt}
+            fill
+            sizes="(max-width: 767px) 90vw, (max-width: 1023px) 48vw, 32vw"
+            className="coop-card__img absolute inset-0 w-full h-full object-cover"
+          />
+        )}
+        <span className="coop-card__scrim" />
+        {isSoon && (
+          <span className="coop-card__badge font-mono">{store.badgeText}</span>
+        )}
+        <span className="coop-card__town">{store.name}</span>
+      </>
+    );
+
+    // A town with a page is a link to it; one without is a plain tile.
+    return store.path ? (
+      <Link key={store.slug} href={store.path} className={className}>
+        {body}
+      </Link>
+    ) : (
+      <div key={store.slug} className={className}>
+        {body}
+      </div>
+    );
+  };
+
+  if (stores.length === 0) return null;
 
   return (
-    <div className="flex flex-col md:flex-row md:flex-wrap lg:flex-nowrap gap-[8vw] md:gap-[2vw] lg:gap-[2.5vw] xl:gap-[1.5vw] w-full justify-center lg:justify-between items-stretch px-[5vw] md:px-[1.4vw] lg:px-[2.5vw] xl:px-[1.3vw] pt-[1vw] pb-[0.5vw] md:pb-[1vw] lg:pb-[1.5vw] lg:pt-[3.5vw] xl:pb-[0.5vw] xl:pt-[2.5vw]">
-      {/* Hitchin Mobile & Tablet */}
-      <Link
-        href="/hitchin"
-        className="group flex lg:hidden relative w-full md:w-[48.5%] h-[50vw] md:h-[36vw] rounded-[3vw] md:rounded-[2vw] overflow-hidden shadow-lg border border-[#333] transition-all duration-300 active:scale-95"
+    <div className="coop-band">
+      <style>{`
+        .coop-band {
+          position: relative;
+          width: 100%;
+          --coop-gap: 4vw;
+          --coop-gutter: 5vw;
+          /* Breathing room under "Find your nearest Peckers.", which the
+             heading component only provides on a phone (pb-[5vw] md:pb-0).
+             Above md the space has to come from the row. */
+          --coop-pad-top: 0px;
+        }
+
+        /* Phone: a plain column, like the live site. The row does no
+           scrolling of its own here — the coming-soon strip inside it does. */
+        .coop-row {
+          display: block;
+          padding: var(--coop-pad-top) var(--coop-gutter) 0;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+        .coop-row::-webkit-scrollbar { display: none; }
+        .coop-row > .coop-card { margin-bottom: 8vw; }
+
+        /* The towns that have not opened yet, in the slot the "We're
+           expanding" card used to occupy. Above the phone breakpoint this
+           wrapper disappears (display: contents) and its cards join the row
+           as ordinary members of it. */
+        .coop-soon {
+          display: flex;
+          gap: var(--coop-gap);
+          overflow-x: auto;
+          overflow-y: hidden;
+          scroll-snap-type: x mandatory;
+          overscroll-behavior-x: contain;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+        .coop-soon::-webkit-scrollbar { display: none; }
+        .coop-soon > .coop-card { flex: 0 0 100%; }
+
+        .coop-card {
+          position: relative;
+          flex: 0 0 auto;
+          /* w-full h-[50vw] on the live site, where full width is 90vw. */
+          width: 100%;
+          height: 50vw;
+          scroll-snap-align: start;
+          container-type: inline-size;
+          border-radius: 3vw;
+          overflow: hidden;
+          border: 1px solid #333;
+          background: #0e0e0e;
+          display: grid;
+          place-items: center;
+          text-decoration: none;
+          isolation: isolate;
+        }
+
+        .coop-card__img { transition: transform .7s cubic-bezier(0,0,.2,1); }
+        .coop-card:hover .coop-card__img { transform: scale(1.1); }
+
+        /* The live site's own values: bg-black/40 on phone and tablet, where
+           the name is huge and sits across the whole picture, and only
+           bg-black/10 from laptop up (hover bg-black/20). Enough to seat the
+           name on the photograph without washing the colour out of it. */
+        .coop-card__scrim {
+          position: absolute;
+          inset: 0;
+          background: rgba(0,0,0,.4);
+          transition: background .4s ease;
+        }
+
+        .coop-card__town {
+          position: relative;
+          z-index: 2;
+          font-family: var(--font-peakers);
+          font-weight: 600;
+          text-transform: uppercase;
+          color: #fff;
+          /* Sized against the card, not the viewport, but set to the ratio
+             the live site works out to: text-[10vw] in a 90vw card. */
+          font-size: 11.1cqw;
+          line-height: .95;
+          letter-spacing: .025em;
+          text-align: center;
+          padding-inline: 6cqw;
+          /* Tailwind's drop-shadow-lg, which is what the live site uses. */
+          filter: drop-shadow(0 10px 8px rgba(0,0,0,.04)) drop-shadow(0 4px 3px rgba(0,0,0,.1));
+        }
+        .coop-card__badge {
+          position: absolute;
+          z-index: 3;
+          top: 4cqw;
+          left: 4cqw;
+          font-size: 3.1cqw;
+          font-weight: 500;
+          letter-spacing: .18em;
+          text-transform: uppercase;
+          color: #fff;
+          border: 1px solid rgba(255,255,255,.65);
+          border-radius: 999px;
+          padding: 1.4cqw 3cqw;
+          background: rgba(0,0,0,.65);
+        }
+
+        /* Unopened towns read as announcements, not as places to order from. */
+        .coop-card--soon { border-style: dashed; border-color: #4a4a4a; }
+        .coop-card--soon .coop-card__img { filter: grayscale(.7) brightness(.62); }
+        .coop-card--soon .coop-card__scrim { background: rgba(0,0,0,.45); }
+
+        /* The arrow sits on the edge of the outermost card rather than beside
+           the row: with the cards filling the width exactly, it is the only
+           thing telling you another town is parked just off screen. On a
+           phone the strip it belongs to is the last thing in the band, so the
+           arrow is placed from the bottom — half a card up from it. */
+        .coop-nav {
+          position: absolute;
+          bottom: 25vw;
+          transform: translateY(50%);
+          z-index: 20;
+          width: 11vw;
+          height: 11vw;
+          max-width: 56px;
+          max-height: 56px;
+          display: grid;
+          place-items: center;
+          color: #fff;
+          font-size: 7vw;
+          line-height: 1;
+          cursor: pointer;
+          /* Just the chevron. The box is still 56px so there is something
+             to tap, but nothing is drawn behind it — the shadow is what
+             keeps it readable over a photograph. */
+          background: none;
+          border: 0;
+          text-shadow: 0 2px 12px rgba(0,0,0,.95), 0 0 4px rgba(0,0,0,.8);
+        }
+        .coop-nav--prev { left: 2vw; }
+        .coop-nav--next { right: 2vw; }
+        /* display: grid above is an author rule, so it would otherwise beat
+           the browser's own [hidden] rule and keep the button on screen. */
+        .coop-nav[hidden] { display: none; }
+
+        /* From tablet up the gutter matches the heading above the row
+           (px-[1.4vw] on CoopHeading), so the first card lines up with the
+           "O" of OUR LOCATIONS. */
+        @media (min-width: 768px) {
+          .coop-band { --coop-gap: 1.5vw; --coop-gutter: 1.4vw; --coop-pad-top: 2.6vw; }
+
+          /* One strip again: the row scrolls and the coming-soon wrapper
+             stops being a box, so its cards sit in the row directly. */
+          .coop-row {
+            display: flex;
+            gap: var(--coop-gap);
+            overflow-x: auto;
+            overflow-y: hidden;
+            scroll-snap-type: x mandatory;
+            scroll-padding-left: var(--coop-gutter);
+            overscroll-behavior-x: contain;
+          }
+          .coop-row > .coop-card { margin-bottom: 0; }
+          .coop-soon { display: contents; }
+          /* The full-width basis belongs to the phone strip only; in the row
+             the card is sized by its width like every other one. */
+          .coop-soon > .coop-card { flex: 0 0 auto; }
+
+          /* Two whole cards across, worked out from the row's own content
+             width rather than from vw, so the maths is right whether or not
+             a scrollbar is taking up room. */
+          .coop-card {
+            /* The live site fixes the height per breakpoint rather than
+               keeping one ratio — h-[36vw] here, 22vw at lg, 19vw at xl —
+               so the cards are matched to those, not to an aspect ratio. */
+            width: calc((100% - var(--coop-gap)) / 2);
+            height: 36vw;
+            border-radius: 2vw;
+          }
+          /* text-[7vw] in a 47vw card. */
+          .coop-card__town { font-size: 14.8cqw; }
+          .coop-card__badge { font-size: 2.6cqw; top: 3.2cqw; left: 3.2cqw; padding: 1.2cqw 2.4cqw; }
+          /* The journal slider's chevron: text-3xl, a fixed 30px, not a vw
+             that grows with the screen. */
+          .coop-nav { top: 50%; bottom: auto; transform: translateY(-50%); font-size: 1.875rem; width: 56px; height: 56px; }
+        }
+
+        /* Three whole cards, the width the live site uses. The fourth waits
+           off the right-hand edge behind the arrow. */
+        @media (min-width: 1024px) {
+          .coop-card {
+            width: calc((100% - 2 * var(--coop-gap)) / 3);
+            height: 22vw;
+            border-radius: 1.5vw;
+          }
+          /* text-[3vw] in a 30vw card. */
+          .coop-card__town { font-size: 10cqw; }
+          /* From laptop up the live site barely tints the photograph. */
+          .coop-card--open .coop-card__scrim { background: rgba(0,0,0,.1); }
+          .coop-card--open:hover .coop-card__scrim { background: rgba(0,0,0,.2); }
+        }
+
+        @media (min-width: 1280px) {
+          .coop-card { height: 19vw; border-radius: 8px; }
+          /* text-[2.6vw] in a 32vw card. */
+          .coop-card__town { font-size: 8.1cqw; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .coop-card__img, .coop-card__scrim { transition-duration: .01ms; }
+        }
+      `}</style>
+
+      <div
+        ref={rowRef}
+        className="coop-row"
+        role="group"
+        aria-label="Peckers locations"
       >
-        {HITCHIN_IMG && (
-          <Image
-            src={HITCHIN_IMG}
-            alt={`Peckers Hitchin - Best Peri Peri Grilled Chicken and Takeaway in Hitchin`}
-            fill
-            className="object-cover transition-transform duration-700 group-active:scale-105"
-            sizes="100vw"
-          />
-        )}
-        <div className="absolute inset-0 bg-black/40" />
-        <span
-          className="absolute inset-0 flex items-center justify-center text-white text-[10vw] md:text-[7vw] uppercase tracking-wide font-semibold drop-shadow-lg"
-          style={{ fontFamily: "var(--font-peakers)" }}
-        >
-          {hitchin?.name || "Hitchin"}
-        </span>
-      </Link>
-
-      {/* Hitchin Desktop & Laptop */}
-      <Link
-        href="/hitchin"
-        className="coop-card group hidden lg:flex relative w-[31vw] xl:w-[37vw] h-[22vw] xl:h-[19vw] items-center justify-center rounded-[1.5vw] xl:rounded-lg overflow-hidden shadow-lg bg-black/40 transition-all duration-500 hover:opacity-90 hover:scale-[1.01]"
-      >
-        {HITCHIN_IMG && (
-          <Image
-            src={HITCHIN_IMG}
-            alt={`Peckers Hitchin - Premium Fried Chicken and Peri Peri Takeaway`}
-            fill
-            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-            sizes="35vw"
-          />
-        )}
-        <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-500" />
-        <span
-          className="relative z-10 text-white text-[3vw] xl:text-[2.6vw] drop-shadow-lg uppercase font-semibold"
-          style={{ fontFamily: "var(--font-peakers)" }}
-        >
-          {hitchin?.name || "Hitchin"}
-        </span>
-      </Link>
-
-      {/* Stevenage Mobile & Tablet */}
-      <Link
-        href="/stevenage"
-        className="group flex lg:hidden relative w-full md:w-[48.5%] h-[50vw] md:h-[36vw] rounded-[3vw] md:rounded-[2vw] overflow-hidden shadow-lg border border-[#333] transition-all duration-300 active:scale-95"
-      >
-        {STEVENAGE_IMG && (
-          <Image
-            src={STEVENAGE_IMG}
-            alt={`Peckers Stevenage - Best Chicken Restaurant and Delivery in Stevenage`}
-            fill
-            className="object-cover transition-transform duration-700 group-active:scale-105"
-            sizes="100vw"
-          />
-        )}
-        <div className="absolute inset-0 bg-black/40" />
-        <span
-          className="absolute inset-0 flex items-center justify-center text-white text-[10vw] md:text-[7vw] uppercase tracking-wide font-semibold drop-shadow-lg"
-          style={{ fontFamily: "var(--font-peakers)" }}
-        >
-          {stevenage?.name || "Stevenage"}
-        </span>
-      </Link>
-
-      {/* Stevenage Desktop & Laptop */}
-      <Link
-        href="/stevenage"
-        className="coop-card group hidden lg:flex relative w-[31vw] xl:w-[37vw] h-[22vw] xl:h-[19vw] items-center justify-center rounded-[1.5vw] xl:rounded-lg overflow-hidden shadow-lg bg-black/40 transition-all duration-500 hover:opacity-90 hover:scale-[1.01]"
-      >
-        {STEVENAGE_IMG && (
-          <Image
-            src={STEVENAGE_IMG}
-            alt={`Peckers Stevenage - Top Rated Peri Peri Grilled Chicken and Food Hertfordshire`}
-            fill
-            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-            sizes="35vw"
-          />
-        )}
-        <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-500" />
-        <span
-          className="relative z-10 text-white text-[3vw] xl:text-[2.6vw] drop-shadow-lg uppercase font-semibold"
-          style={{ fontFamily: "var(--font-peakers)" }}
-        >
-          {stevenage?.name || "Stevenage"}
-        </span>
-      </Link>
-
-      {/* Third Card */}
-      <div className="coop-card w-full md:w-full lg:w-[31vw] xl:w-[35vw] h-[60vw] md:h-[36vw] lg:h-[22vw] xl:h-[19vw] bg-[#2222] rounded-[3vw] md:rounded-[2vw] lg:rounded-[1.5vw] xl:rounded-lg flex flex-col items-center justify-center border border-[#383838] px-[4vw] md:px-[6vw] lg:px-[2vw] xl:px-[1vw] py-[6vw] md:py-[4vw] lg:py-[1.5vw] xl:py-[1vw] relative overflow-hidden">
-        {!submitted ? (
-          <>
-            <span
-              className="text-white font-bold text-[7vw] md:text-[4.5vw] lg:text-[3.2vw] xl:text-[2.5vw] mb-[4vw] md:mb-[3vw] lg:mb-[2vw] xl:mb-[1.5vw] text-center tracking-wide"
-              style={{ fontFamily: "var(--font-peakers)" }}
-            >
-              WE’RE EXPANDING
-            </span>
-
-            <form
-              onSubmit={handleSubmit}
-              className="w-full flex flex-col items-center"
-            >
-              <input
-                type="text"
-                placeholder="Suggest our next town… "
-                value={town}
-                onChange={(e) => setTown(e.target.value)}
-                disabled={isSubmitting}
-                className="w-[85%] md:w-[90%] lg:w-[85%] xl:w-[70%] bg-transparent border border-[#383838] rounded-md text-center text-white font-mono py-[3vw] md:py-[2.5vw] lg:py-[1.2vw] xl:py-[0.7vw] px-[4vw] md:px-[4vw] lg:px-[2vw] xl:px-[1vw] mb-[4vw] md:mb-[4vw] lg:mb-[2vw] xl:mb-[1.6vw] placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-white transition-all text-[4vw] md:text-[2.2vw] lg:text-[1.3vw] xl:text-[1vw] disabled:opacity-50"
-                required
-                suppressHydrationWarning
-              />
-
-              <button
-                type="submit"
-                disabled={isSubmitting || !town.trim()}
-                className="w-[60%] md:w-[70%] lg:w-[65%] xl:w-[60%] py-[3vw] md:py-[2.5vw] lg:py-[0.8vw] xl:py-[0.2vw] border-2 border-[#383838] rounded-[4vw] md:rounded-[2vw] lg:rounded-[1.5vw] xl:rounded-[1vw] text-white font-mono text-[4vw] md:text-[2.2vw] lg:text-[1.5vw] xl:text-[1.2vw] tracking-widest transition-all bg-[#1111] hover:shadow-[0.4vw_0.4vw_0px_white] disabled:opacity-50 disabled:hover:shadow-none flex items-center justify-center gap-2"
-              >
-                {isSubmitting ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    SENDING...
-                  </>
-                ) : (
-                  "SEND"
-                )}
-              </button>
-              {error && (
-                <p className="text-red-500 text-[3vw] lg:text-[1vw] mt-2 font-mono uppercase">
-                  {error}
-                </p>
-              )}
-            </form>
-          </>
-        ) : (
-          <div className="flex flex-col items-center justify-center text-center animate-in fade-in zoom-in duration-700">
-            <div className="w-[15vw] h-[15vw] lg:w-[5vw] lg:h-[5vw] bg-white text-black rounded-full flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(255,255,255,0.3)]">
-              <svg
-                width="60%"
-                height="60%"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M5 13L9 17L19 7"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-            <span
-              className="text-white text-[7vw] md:text-[8vw] lg:text-[2.5vw] xl:text-[2vw] mb-2 tracking-wide"
-              style={{ fontFamily: "var(--font-peakers)" }}
-            >
-              THANK YOU!
-            </span>
-            <p className="text-gray-400 font-mono text-[3.5vw] lg:text-[1.1vw] xl:text-[0.9vw] max-w-[80%] uppercase">
-              We'll consider <span className="text-white">{town}</span> for
-              our next location.
-            </p>
-            <button
-              onClick={() => {
-                setSubmitted(false);
-                setTown("");
-              }}
-              className="mt-6 text-gray-500 hover:text-white transition-colors text-[3vw] lg:text-[0.8vw] font-mono uppercase underline decoration-1 underline-offset-4"
-            >
-              Suggest another
-            </button>
-          </div>
-        )}
+        {openStores.map(renderCard)}
+        <div ref={soonRef} className="coop-soon">
+          {soonStores.map(renderCard)}
+        </div>
       </div>
+
+      {/* The arrows leave the page entirely at each end rather than sitting
+          there inert — from the outside that is the only way to tell. */}
+      <button
+        type="button"
+        onClick={() => scrollByCard(-1)}
+        aria-label="Scroll locations left"
+        className="coop-nav coop-nav--prev"
+        hidden={edges.start}
+      >
+        <span className="pb-[1vw] md:pb-1 font-sans font-bold">&lsaquo;</span>
+      </button>
+      <button
+        type="button"
+        onClick={() => scrollByCard(1)}
+        aria-label="Scroll locations right"
+        className="coop-nav coop-nav--next"
+        hidden={edges.end}
+      >
+        <span className="pb-[1vw] md:pb-1 font-sans font-bold">&rsaquo;</span>
+      </button>
     </div>
   );
 }
