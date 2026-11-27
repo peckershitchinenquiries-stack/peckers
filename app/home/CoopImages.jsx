@@ -146,6 +146,9 @@ export default function CoopImages({ locations = [] }) {
              heading component only provides on a phone (pb-[5vw] md:pb-0).
              Above md the space has to come from the row. */
           --coop-pad-top: 0px;
+          /* Half the difference between the font's descender space and the
+             gap its ascent leaves above a capital, in ems of the badge. */
+          --coop-badge-nudge: .045em;
         }
 
         /* Phone: a plain column, like the live site. The row does no
@@ -232,14 +235,30 @@ export default function CoopImages({ locations = [] }) {
           z-index: 3;
           top: 4cqw;
           left: 4cqw;
+          /* A pill, not a run of inline text: the box centres the letters
+             itself instead of leaving them to the font's own line box. */
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
           font-size: 3.1cqw;
           font-weight: 500;
           letter-spacing: .18em;
+          /* No line-height here on purpose: the pill is positioned, so it
+             blockifies and takes its height from the inherited line-height.
+             Setting it to 1 would shave about a fifth off the capsule. */
           text-transform: uppercase;
           color: #fff;
           border: 1px solid rgba(255,255,255,.65);
           border-radius: 999px;
-          padding: 1.4cqw 3cqw;
+          /* The pill keeps exactly the size it had: every correction below
+             adds on one side what it takes off the other, so the padding
+             still totals 2.8cqw tall and 6cqw wide.
+             Across: letter-spacing is added after the last letter too, so
+             the text sat left-heavy in a symmetrical pill.
+             Down: capitals leave the font's descender space empty under
+             them, so centring the line box left the letters sitting high. */
+          padding: calc(1.4cqw + var(--coop-badge-nudge)) calc(3cqw - .09em)
+                   calc(1.4cqw - var(--coop-badge-nudge)) calc(3cqw + .09em);
           background: rgba(0,0,0,.65);
         }
 
@@ -317,10 +336,29 @@ export default function CoopImages({ locations = [] }) {
           }
           /* text-[7vw] in a 47vw card. */
           .coop-card__town { font-size: 14.8cqw; }
-          .coop-card__badge { font-size: 2.6cqw; top: 3.2cqw; left: 3.2cqw; padding: 1.2cqw 2.4cqw; }
+          .coop-card__badge {
+            font-size: 2.6cqw;
+            top: 3.2cqw;
+            left: 3.2cqw;
+            padding: calc(1.2cqw + var(--coop-badge-nudge)) calc(2.4cqw - .09em)
+                     calc(1.2cqw - var(--coop-badge-nudge)) calc(2.4cqw + .09em);
+          }
           /* The journal slider's chevron: text-3xl, a fixed 30px, not a vw
              that grows with the screen. */
-          .coop-nav { top: 50%; bottom: auto; transform: translateY(-50%); font-size: 1.875rem; width: 56px; height: 56px; }
+          /* Centred on the cards, not on the band: the band is taller than
+             the row of cards by --coop-pad-top, so a plain top: 50% lands
+             half that padding high. Pinning the box to the card strip and
+             letting the auto margins share what is left centres it on the
+             picture itself. */
+          .coop-nav {
+            top: var(--coop-pad-top);
+            bottom: 0;
+            transform: none;
+            margin-block: auto;
+            font-size: 1.875rem;
+            width: 56px;
+            height: 56px;
+          }
         }
 
         /* Three whole cards, the width the live site uses. The fourth waits
