@@ -13,7 +13,7 @@
 
 export const POPUP_AUDIO = {
   // Master switch. Set to false to turn the music off completely.
-  enabled: true,
+  enabled: false,
 
   // The music file. Put it in the "public" folder and write the path starting
   // from there, e.g. a file at public/audio/website-welcome.mp3 is
